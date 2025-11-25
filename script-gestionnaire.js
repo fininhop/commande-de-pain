@@ -1,6 +1,7 @@
 // =======================================================
 // FICHIER : script-gestionnaire.js (CODE CLIENT)
 // Gère l'affichage, le tri, la pagination et les options des commandes
+// Adapté pour mobile : affiche des cartes sur petits écrans
 // =======================================================
 
 const ITEMS_PER_PAGE = 15;
@@ -9,46 +10,36 @@ let currentPage = 1;
 let currentSortField = 'createdAt';
 let currentSortDirection = 'desc';
 
-// Rendre la fonction accessible globalement pour le bouton "Actualiser"
+// Fetch orders from serverless API
 window.fetchOrders = async function() {
     const ordersTableBody = document.getElementById('ordersTableBody');
     const loadingMessage = document.getElementById('loadingMessage');
     const errorMessage = document.getElementById('errorMessage');
-    
-    if (!ordersTableBody || !loadingMessage || !errorMessage) {
+
+    if (!loadingMessage || !errorMessage) {
         console.error('Erreur: Les éléments DOM ne sont pas chargés');
         return;
     }
-    
-    // Affichage initial du chargement
+
     loadingMessage.textContent = 'Chargement des commandes...';
-    ordersTableBody.innerHTML = '';
+    if (ordersTableBody) ordersTableBody.innerHTML = '';
     errorMessage.textContent = '';
-    errorMessage.classList.add('hidden');
+    errorMessage.classList.add('d-none');
 
     try {
-        // Appel de la fonction Serverless Vercel
-        console.log('Fetching orders from /api/get-orders...');
         const response = await fetch('/api/get-orders');
-
         if (!response.ok) {
             let errorResult = { message: `Erreur HTTP ${response.status}` };
-            try {
-                errorResult = await response.json();
-            } catch (e) { /* Pas de JSON si le serveur a planté */ }
-            console.error('API Response Error:', errorResult);
+            try { errorResult = await response.json(); } catch (e) {}
             throw new Error(errorResult.message || `Erreur HTTP ${response.status}`);
         }
-
         const result = await response.json();
         allOrders = result.orders || [];
-
         loadingMessage.textContent = '';
 
         if (!allOrders || allOrders.length === 0) {
-            console.log('No orders found');
-            ordersTableBody.innerHTML = '<tr><td colspan="7">Aucune commande trouvée.</td></tr>';
-            document.getElementById('paginationContainer').innerHTML = '';
+            if (ordersTableBody) ordersTableBody.innerHTML = '<tr><td colspan="8">Aucune commande trouvée.</td></tr>';
+            const pc = document.getElementById('paginationContainer'); if (pc) pc.innerHTML = '';
             return;
         }
 
@@ -61,7 +52,7 @@ window.fetchOrders = async function() {
         console.error('Erreur de connexion à l\'API:', error);
         loadingMessage.textContent = '';
         errorMessage.textContent = `Échec de la récupération : ${error.message}. Vérifiez les variables Vercel/Firebase Admin.`;
-        errorMessage.classList.remove('hidden');
+        errorMessage.classList.remove('d-none');
     }
 }
 
@@ -81,6 +72,15 @@ function formatDateTime(isoString) {
     } catch (e) {
         return isoString;
     }
+}
+
+// Phone validation helper — simple but practical
+function isValidPhoneNumber(phone) {
+    if (!phone) return false;
+    const digits = phone.replace(/[^0-9]/g, '');
+    if (digits.length < 6) return false;
+    const normalized = phone.trim();
+    return /^\+?[0-9 ()\-]+$/.test(normalized);
 }
 
 // Fonction de tri
@@ -113,61 +113,97 @@ function sortOrders(field, direction = 'asc') {
     renderPage();
 }
 
-// Fonction pour afficher une page
+// Render page (table on desktop, cards on mobile)
 function renderPage() {
     const ordersTableBody = document.getElementById('ordersTableBody');
-    ordersTableBody.innerHTML = '';
+    const ordersCardsContainer = document.getElementById('ordersCardsContainer');
 
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     const pageOrders = allOrders.slice(startIndex, endIndex);
 
-    pageOrders.forEach(order => {
-        const row = ordersTableBody.insertRow();
-        
-        // Cellule checkbox
-        const checkboxCell = row.insertCell(0);
-        checkboxCell.innerHTML = `<input type="checkbox" class="order-checkbox" data-order-id="${order.id}">`;
-        
-        // Formatage de la liste des articles
-        const itemsList = `<ul class="items-list">${(order.items || []).map(item => 
-            `<li><strong>${item.quantity}</strong> x ${item.name}</li>`
-        ).join('')}</ul>`;
+    const isMobile = window.innerWidth < 768;
 
-        row.insertCell(1).textContent = formatDateTime(order.createdAt);
-        row.insertCell(2).textContent = order.name;
-        row.insertCell(3).innerHTML = `Email: ${order.email}<br>Tél: ${order.phone || 'N/A'}`;
-        row.insertCell(4).textContent = order.date;
-        row.insertCell(5).textContent = order.renouveler === 'oui' ? '✅ Oui' : '❌ Non';
-        row.insertCell(6).innerHTML = itemsList;
-        
-        // Cellule d'actions (Options) - create button element and attach listener to avoid inline onclick issues
-        const actionsCell = row.insertCell(7);
-        const optBtn = document.createElement('button');
-        optBtn.type = 'button';
-        optBtn.className = 'btn btn-sm btn-outline-secondary';
-        optBtn.textContent = '⋮ Options';
-        optBtn.addEventListener('click', () => showOrderOptions(order.id, order.name, order.email, order.phone || ''));
-        actionsCell.appendChild(optBtn);
-    });
+    if (ordersTableBody) ordersTableBody.innerHTML = '';
+    if (ordersCardsContainer) ordersCardsContainer.innerHTML = '';
 
-    // Créer la pagination
+    if (isMobile && ordersCardsContainer) {
+        // Mobile: render cards
+        pageOrders.forEach(order => {
+            const itemsList = `<ul class="items-list mb-2">${(order.items || []).map(item => 
+                `<li><strong>${item.quantity}</strong> x ${escapeHtml(item.name)}</li>`
+            ).join('')}</ul>`;
+
+            const card = document.createElement('div');
+            card.className = 'card mb-3';
+            card.innerHTML = `
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-bold">${escapeHtml(order.name)} <small class="text-muted">${formatDateTime(order.createdAt)}</small></div>
+                            <div class="text-sm">${escapeHtml(order.email || '')} ${order.phone ? ('• ' + escapeHtml(order.phone)) : ''}</div>
+                        </div>
+                        <div class="text-end">
+                            <input type="checkbox" class="order-checkbox form-check-input mb-2" data-order-id="${order.id}">
+                            <div><button type="button" class="btn btn-sm btn-outline-secondary options-btn">⋮ Options</button></div>
+                        </div>
+                    </div>
+                    <div class="mt-2">${itemsList}</div>
+                    <div class="mt-2 small">Retrait: ${escapeHtml(order.date || '')} • Renouveler: ${order.renouveler === 'oui' ? '✅ Oui' : '❌ Non'}</div>
+                </div>
+            `;
+            ordersCardsContainer.appendChild(card);
+        });
+
+        // Attach listeners
+        document.querySelectorAll('#ordersCardsContainer .order-checkbox').forEach(cb => cb.addEventListener('change', updateBulkActionsBar));
+        document.querySelectorAll('#ordersCardsContainer .options-btn').forEach((btn, idx) => {
+            const order = pageOrders[idx];
+            btn.addEventListener('click', () => showOrderOptions(order.id, order.name, order.email, order.phone || ''));
+        });
+
+    } else if (ordersTableBody) {
+        // Desktop: render table rows
+        pageOrders.forEach(order => {
+            const row = ordersTableBody.insertRow();
+            // checkbox
+            const checkboxCell = row.insertCell(0);
+            checkboxCell.innerHTML = `<input type="checkbox" class="order-checkbox" data-order-id="${order.id}">`;
+
+            const itemsList = `<ul class="items-list">${(order.items || []).map(item => 
+                `<li><strong>${item.quantity}</strong> x ${escapeHtml(item.name)}</li>`
+            ).join('')}</ul>`;
+
+            row.insertCell(1).textContent = formatDateTime(order.createdAt);
+            row.insertCell(2).textContent = order.name;
+            row.insertCell(3).innerHTML = `Email: ${escapeHtml(order.email || '')}<br>Tél: ${escapeHtml(order.phone || 'N/A')}`;
+            row.insertCell(4).textContent = order.date;
+            row.insertCell(5).textContent = order.renouveler === 'oui' ? '✅ Oui' : '❌ Non';
+            row.insertCell(6).innerHTML = itemsList;
+
+            const actionsCell = row.insertCell(7);
+            const optBtn = document.createElement('button');
+            optBtn.type = 'button';
+            optBtn.className = 'btn btn-sm btn-outline-secondary';
+            optBtn.textContent = '⋮ Options';
+            optBtn.addEventListener('click', () => showOrderOptions(order.id, order.name, order.email, order.phone || ''));
+            actionsCell.appendChild(optBtn);
+        });
+
+        document.querySelectorAll('#ordersTableBody .order-checkbox').forEach(checkbox => checkbox.addEventListener('change', updateBulkActionsBar));
+    }
+
+    // Pagination
     createPagination();
-    
-    // Ajouter les event listeners aux checkboxes
-    const checkboxes = document.querySelectorAll('.order-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateBulkActionsBar);
-    });
 }
 
 // Fonction pour créer les boutons de pagination
 function createPagination() {
     const paginationContainer = document.getElementById('paginationContainer');
+    if (!paginationContainer) return;
     paginationContainer.innerHTML = '';
 
     const totalPages = Math.ceil(allOrders.length / ITEMS_PER_PAGE);
-
     if (totalPages <= 1) return;
 
     // Bouton Précédent
@@ -187,11 +223,7 @@ function createPagination() {
     for (let i = 1; i <= totalPages; i++) {
         const pageBtn = document.createElement('button');
         pageBtn.textContent = i;
-        if (i === currentPage) {
-            pageBtn.className = 'pagination-btn btn btn-primary pagination-active me-1';
-        } else {
-            pageBtn.className = 'pagination-btn btn btn-outline-primary me-1';
-        }
+        pageBtn.className = i === currentPage ? 'pagination-btn btn btn-primary pagination-active me-1' : 'pagination-btn btn btn-outline-primary me-1';
         pageBtn.onclick = () => {
             currentPage = i;
             renderPage();
@@ -220,24 +252,38 @@ function createPagination() {
     paginationContainer.appendChild(pageInfo);
 }
 
+// Bulk actions UI updater
+function updateBulkActionsBar() {
+    const checked = document.querySelectorAll('.order-checkbox:checked').length;
+    const bar = document.getElementById('bulkActionsBar');
+    const countEl = document.getElementById('bulkSelectedCount');
+    if (bar) {
+        if (checked > 0) {
+            bar.classList.remove('d-none');
+            if (countEl) countEl.textContent = `${checked}`;
+        } else {
+            bar.classList.add('d-none');
+            if (countEl) countEl.textContent = '0';
+        }
+    }
+}
+
 // Fonction pour afficher les options
 window.showOrderOptions = function(orderId, orderName, orderEmail, orderPhone) {
     const modal = document.createElement('div');
     modal.className = 'modal-custom';
     modal.id = 'optionsModal';
-    // Build modal content with conditional phone button (only on Android)
     const sanitizedPhone = (orderPhone || '').trim();
     const hasPhone = isValidPhoneNumber(sanitizedPhone);
     const isAndroid = /android/.test(navigator.userAgent.toLowerCase());
 
     let buttonsHtml = '';
-    buttonsHtml += `<button class="modal-btn email-btn" onclick="openEmailClient('${orderEmail}', '${orderName}', '${sanitizedPhone.replace(/'/g, "\\'")}')">📧 Envoyer un Email</button>`;
-    // Only show call button on Android devices
+    buttonsHtml += `<button class="btn btn-outline-primary" onclick="openEmailClient('${orderEmail}', '${escapeHtml(orderName)}', '${sanitizedPhone.replace(/'/g, "\\'")}')">📧 Envoyer un Email</button>`;
     if (hasPhone && isAndroid) {
-        buttonsHtml += `<button class="modal-btn phone-btn" onclick="window.location.href='tel:${sanitizedPhone.replace(/[^0-9+\- ]/g,'')}'; document.getElementById('optionsModal').remove();">📞 Appeler</button>`;
+        buttonsHtml += `<button class="btn btn-success" onclick="window.location.href='tel:${sanitizedPhone.replace(/[^0-9+\- ]/g,'')}'; document.getElementById('optionsModal').remove();">📞 Appeler</button>`;
     }
-    buttonsHtml += `<button class="modal-btn delete-btn" onclick="deleteOrder('${orderId}', '${orderName}')">🗑️ Supprimer la Commande</button>`;
-    buttonsHtml += `<button class="modal-btn cancel-btn" onclick="document.getElementById('optionsModal').remove()">❌ Annuler</button>`;
+    buttonsHtml += `<button class="btn btn-danger" onclick="deleteOrder('${orderId}', '${escapeHtml(orderName)}')">🗑️ Supprimer</button>`;
+    buttonsHtml += `<button class="btn btn-light" onclick="document.getElementById('optionsModal').remove()">❌ Annuler</button>`;
 
     modal.innerHTML = `
         <div class="modal-content p-3 bg-white rounded shadow-sm">
@@ -249,23 +295,11 @@ window.showOrderOptions = function(orderId, orderName, orderEmail, orderPhone) {
     document.body.appendChild(modal);
 }
 
-// Phone validation helper — simple but practical
-function isValidPhoneNumber(phone) {
-    if (!phone) return false;
-    // Accept digits, spaces, +, dash, parentheses — require at least 6 digits
-    const digits = phone.replace(/[^0-9]/g, '');
-    if (digits.length < 6) return false;
-    // Basic pattern check (allow + at start)
-    const normalized = phone.trim();
-    return /^\+?[0-9 ()\-]+$/.test(normalized);
-}
-
 // Fonction pour ouvrir le client email
 window.openEmailClient = function(email, orderName, phone) {
     const userAgent = navigator.userAgent.toLowerCase();
     const isAndroid = /android/.test(userAgent);
-    const isIOS = /iphone|ipad|ipot/.test(userAgent);
-    const isDesktop = !isAndroid && !isIOS;
+    const isIOS = /iphone|ipad|ipod/.test(userAgent);
 
     const subject = encodeURIComponent(`Commande de Pain Bio - ${orderName}`);
     const body = encodeURIComponent(`Bonjour ${orderName},\n\nConcernant votre commande de pain bio...\n\nCordialement,\nÉquipe Pain Bio`);
@@ -273,7 +307,6 @@ window.openEmailClient = function(email, orderName, phone) {
     const yahooUrl = `https://compose.mail.yahoo.com/?to=${email}&subject=${subject}&body=${body}`;
 
     if (isAndroid || isIOS) {
-        // Sur mobile, proposer email et appel
         const mobileModal = document.createElement('div');
         mobileModal.className = 'modal-custom';
         mobileModal.id = 'mobileActionsModal';
@@ -283,14 +316,13 @@ window.openEmailClient = function(email, orderName, phone) {
                 <h2 class="h5 text-center mt-2">Choisir une action</h2>
                 <div class="d-grid gap-2 mt-3">
                     <button class="btn btn-primary" onclick="window.location.href = 'mailto:${email}?subject=${subject}&body=${body}'; document.getElementById('mobileActionsModal').remove(); document.getElementById('optionsModal').remove();">📧 Envoyer un Email</button>
-                    <button class="btn btn-success" onclick="window.location.href = 'tel:${(phone || '').replace(/[^0-9+\- ]/g, '') || email.replace(/[^0-9+\- ]/g, '')}'; document.getElementById('mobileActionsModal').remove(); document.getElementById('optionsModal').remove();">📞 Appeler</button>
+                    <button class="btn btn-success" onclick="window.location.href = 'tel:${(phone || '').replace(/[^0-9+\- ]/g, '')}'; document.getElementById('mobileActionsModal').remove(); document.getElementById('optionsModal').remove();">📞 Appeler</button>
                     <button class="btn btn-secondary" onclick="document.getElementById('mobileActionsModal').remove()">❌ Annuler</button>
                 </div>
             </div>
         `;
         document.body.appendChild(mobileModal);
-    } else if (isDesktop) {
-        // Sur desktop, proposer un choix
+    } else {
         const emailModal = document.createElement('div');
         emailModal.className = 'modal-custom';
         emailModal.id = 'emailModal';
@@ -308,19 +340,11 @@ window.openEmailClient = function(email, orderName, phone) {
         `;
         document.body.appendChild(emailModal);
     }
-
-    // Fermer la première modal
-    const optionsModal = document.getElementById('optionsModal');
-    if (optionsModal && !isAndroid && !isIOS) {
-        // Ne pas fermer immédiatement sur desktop pour laisser le temps de voir le menu email
-    }
 }
 
 // Fonction pour supprimer une commande
 window.deleteOrder = async function(orderId, orderName) {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer la commande de ${orderName} ?`)) {
-        return;
-    }
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer la commande de ${orderName} ?`)) return;
 
     try {
         const response = await fetch(`/api/delete-order`, {
@@ -333,8 +357,7 @@ window.deleteOrder = async function(orderId, orderName) {
             alert('Commande supprimée avec succès !');
             allOrders = allOrders.filter(order => order.id !== orderId);
             renderPage();
-            const optionsModal = document.getElementById('optionsModal');
-            if (optionsModal) optionsModal.remove();
+            const optionsModal = document.getElementById('optionsModal'); if (optionsModal) optionsModal.remove();
         } else {
             const error = await response.json();
             alert(`Erreur: ${error.message}`);
@@ -348,18 +371,13 @@ window.deleteOrder = async function(orderId, orderName) {
 // Fonction pour supprimer plusieurs commandes
 window.deleteSelectedOrders = async function() {
     const checkboxes = document.querySelectorAll('.order-checkbox:checked');
-    
     if (checkboxes.length === 0) {
         alert('Veuillez sélectionner au moins une commande à supprimer.');
         return;
     }
-    
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${checkboxes.length} commande(s) ?`)) {
-        return;
-    }
-    
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${checkboxes.length} commande(s) ?`)) return;
+
     const orderIds = Array.from(checkboxes).map(cb => cb.dataset.orderId);
-    
     try {
         const response = await fetch(`/api/delete-orders`, {
             method: 'POST',
@@ -371,84 +389,40 @@ window.deleteSelectedOrders = async function() {
             alert(`${checkboxes.length} commande(s) supprimée(s) avec succès !`);
             allOrders = allOrders.filter(order => !orderIds.includes(order.id));
             renderPage();
-            // Réinitialiser les checkboxes
-            document.getElementById('selectAllCheckbox').checked = false;
+            const selectAll = document.getElementById('selectAllCheckbox'); if (selectAll) selectAll.checked = false;
         } else {
             const error = await response.json();
             alert(`Erreur: ${error.message}`);
         }
     } catch (error) {
-        console.error('Erreur lors de la suppression multiple:', error);
-        alert('Erreur réseau lors de la suppression');
+        console.error('Erreur lors de la suppression en masse:', error);
+        alert('Erreur réseau lors de la suppression en masse');
     }
 }
 
-// Fonction pour mettre à jour la barre d'actions en masse
-function updateBulkActionsBar() {
-    const checkboxes = document.querySelectorAll('.order-checkbox:checked');
-    const bulkActionsBar = document.getElementById('bulkActionsBar');
-    const selectedCount = document.getElementById('selectedCount');
-    
-    if (checkboxes.length > 0) {
-        bulkActionsBar.classList.add('show');
-        selectedCount.textContent = `${checkboxes.length} commande(s) sélectionnée(s)`;
-    } else {
-        bulkActionsBar.classList.remove('show');
-        selectedCount.textContent = '0 sélectionné(s)';
-        document.getElementById('selectAllCheckbox').checked = false;
-    }
-}
-
-// Fonction pour mettre à jour la barre d'actions en masse
-function updateBulkActionsBar() {
-    const checkboxes = document.querySelectorAll('.order-checkbox:checked');
-    const bulkActionsBar = document.getElementById('bulkActionsBar');
-    const selectedCount = document.getElementById('selectedCount');
-    
-    if (checkboxes.length > 0) {
-        bulkActionsBar.classList.add('show');
-        selectedCount.textContent = `${checkboxes.length} commande(s) sélectionnée(s)`;
-    } else {
-        bulkActionsBar.classList.remove('show');
-        selectedCount.textContent = '0 sélectionné(s)';
-        document.getElementById('selectAllCheckbox').checked = false;
-    }
-}
-
-// Fonction pour sélectionner/désélectionner tous les checkboxes
-window.toggleSelectAll = function(selectAllCheckbox) {
-    const checkboxes = document.querySelectorAll('.order-checkbox');
-    checkboxes.forEach(cb => {
-        cb.checked = selectAllCheckbox.checked;
-    });
+// Select all toggle
+window.toggleSelectAll = function(checked) {
+    document.querySelectorAll('.order-checkbox').forEach(cb => { cb.checked = checked; });
     updateBulkActionsBar();
 }
 
-// Fonction pour utiliser les headers de tri
-function setupSortHeaders() {
-    const headers = document.querySelectorAll('th.sortable');
-    headers.forEach(header => {
-        header.style.cursor = 'pointer';
-        header.title = 'Cliquez pour trier';
-        header.addEventListener('click', () => {
-            const field = header.dataset.field;
-            const direction = currentSortField === field && currentSortDirection === 'asc' ? 'desc' : 'asc';
-            sortOrders(field, direction);
-        });
-    });
-}
-
-// Chargement automatique au démarrage de la page
+// Init: fetch orders and wire up resize debounce and selectAll
 document.addEventListener('DOMContentLoaded', () => {
-    setupSortHeaders();
-    // Detect Android devices and add class for targeting styles
-    try {
-        const ua = navigator.userAgent.toLowerCase();
-        if (/android/.test(ua)) {
-            document.body.classList.add('android');
-        }
-    } catch (e) {
-        // ignore
-    }
+    const selectAll = document.getElementById('selectAllCheckbox');
+    if (selectAll) selectAll.addEventListener('change', (e) => toggleSelectAll(e.target.checked));
+
+    // Debounced resize to re-render for mobile/table switch
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            renderPage();
+        }, 200);
+    });
+
+    // Bulk actions bar delete button
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    if (bulkDeleteBtn) bulkDeleteBtn.addEventListener('click', deleteSelectedOrders);
+
     fetchOrders();
 });

@@ -12,8 +12,7 @@
         /* Minimal local tweaks when needed */
         .items-list { list-style: none; padding: 0; margin: 0; }
         .items-list li { margin-bottom: 4px; }
-        .bulk-actions-bar { display: none; }
-        .bulk-actions-bar.show { display: flex; }
+        /* Prefer Bootstrap `d-none` utility for visibility control */
         .modal-custom .modal-content { max-width: 520px; }
         /* modal-custom overlay styles (avoid Bootstrap .modal conflicts) */
         .modal-custom {
@@ -47,12 +46,13 @@
                 <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
                 <!-- Barre d'actions en masse -->
-                <div id="bulkActionsBar" class="bulk-actions-bar alert alert-secondary d-flex align-items-center justify-content-between">
-                    <span id="selectedCount" class="fw-bold">0 sélectionné(s)</span>
-                    <button class="btn btn-danger" onclick="deleteSelectedOrders()">🗑️ Supprimer les sélectionnés</button>
+                <div id="bulkActionsBar" class="bulk-actions-bar alert alert-secondary d-flex align-items-center justify-content-between d-none">
+                    <span id="bulkSelectedCount" class="fw-bold">0 sélectionné(s)</span>
+                    <button id="bulkDeleteBtn" class="btn btn-danger" onclick="deleteSelectedOrders()">🗑️ Supprimer les sélectionnés</button>
                 </div>
 
-                <div id="ordersList" class="table-responsive mt-3">
+                <!-- Desktop: table view (md and up) -->
+                <div id="ordersTableContainer" class="table-responsive mt-3 d-none d-md-block">
                     <table class="table table-striped table-hover align-middle">
                         <thead class="table-primary">
                             <tr>
@@ -69,6 +69,9 @@
                         <tbody id="ordersTableBody"></tbody>
                     </table>
                 </div>
+
+                <!-- Mobile: card list (smaller devices) -->
+                <div id="ordersCardsContainer" class="d-block d-md-none mt-3"></div>
 
                 <nav aria-label="Pagination" class="d-flex justify-content-center mt-3">
                     <div id="paginationContainer"></div>
