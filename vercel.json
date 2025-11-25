@@ -7,5 +7,8 @@
       "VITE_FIREBASE_APP_ID": "$NEXT_PUBLIC_FIREBASE_APP_ID"
     }
   },
-  "buildCommand": "echo \"const firebaseConfig = { apiKey: '$VITE_FIREBASE_API_KEY', authDomain: '$VITE_FIREBASE_AUTH_DOMAIN', projectId: '$VITE_FIREBASE_PROJECT_ID', appId: '$VITE_FIREBASE_APP_ID' };\" > config.js"
+  "buildCommand": "echo \"const firebaseConfig = { apiKey: '$VITE_FIREBASE_API_KEY', authDomain: '$VITE_FIREBASE_AUTH_DOMAIN', projectId: '$VITE_FIREBASE_PROJECT_ID', appId: '$VITE_FIREBASE_APP_ID' };\" > config.js",
+  
+  // NOUVEAU: Indique à Vercel que le répertoire de sortie est la racine (où se trouvent index.html)
+  "outputDirectory": "." 
 }
