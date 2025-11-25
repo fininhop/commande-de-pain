@@ -3,7 +3,7 @@
 // Gère l'affichage, le tri, la pagination et les options des commandes
 // =======================================================
 
-const ITEMS_PER_PAGE = 30;
+const ITEMS_PER_PAGE = 15;
 let allOrders = [];
 let currentPage = 1;
 let currentSortField = 'createdAt';
@@ -120,20 +120,24 @@ function renderPage() {
     pageOrders.forEach(order => {
         const row = ordersTableBody.insertRow();
         
+        // Cellule checkbox
+        const checkboxCell = row.insertCell(0);
+        checkboxCell.innerHTML = `<input type="checkbox" class="order-checkbox" data-order-id="${order.id}">`;
+        
         // Formatage de la liste des articles
         const itemsList = `<ul class="items-list">${(order.items || []).map(item => 
             `<li><strong>${item.quantity}</strong> x ${item.name}</li>`
         ).join('')}</ul>`;
 
-        row.insertCell(0).textContent = formatDateTime(order.createdAt);
-        row.insertCell(1).textContent = order.name;
-        row.insertCell(2).innerHTML = `Email: ${order.email}<br>Tél: ${order.phone || 'N/A'}`;
-        row.insertCell(3).textContent = order.date;
-        row.insertCell(4).textContent = order.renouveler === 'oui' ? '✅ Oui' : '❌ Non';
-        row.insertCell(5).innerHTML = itemsList;
+        row.insertCell(1).textContent = formatDateTime(order.createdAt);
+        row.insertCell(2).textContent = order.name;
+        row.insertCell(3).innerHTML = `Email: ${order.email}<br>Tél: ${order.phone || 'N/A'}`;
+        row.insertCell(4).textContent = order.date;
+        row.insertCell(5).textContent = order.renouveler === 'oui' ? '✅ Oui' : '❌ Non';
+        row.insertCell(6).innerHTML = itemsList;
         
         // Cellule d'actions (Options)
-        const actionsCell = row.insertCell(6);
+        const actionsCell = row.insertCell(7);
         actionsCell.innerHTML = `
             <button class="action-btn" onclick="showOrderOptions('${order.id}', '${order.name}', '${order.email}')">
                 ⋮ Options
@@ -143,6 +147,12 @@ function renderPage() {
 
     // Créer la pagination
     createPagination();
+    
+    // Ajouter les event listeners aux checkboxes
+    const checkboxes = document.querySelectorAll('.order-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActionsBar);
+    });
 }
 
 // Fonction pour créer les boutons de pagination
@@ -302,6 +312,85 @@ window.deleteOrder = async function(orderId, orderName) {
         console.error('Erreur lors de la suppression:', error);
         alert('Erreur réseau lors de la suppression');
     }
+}
+
+// Fonction pour supprimer plusieurs commandes
+window.deleteSelectedOrders = async function() {
+    const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+    
+    if (checkboxes.length === 0) {
+        alert('Veuillez sélectionner au moins une commande à supprimer.');
+        return;
+    }
+    
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${checkboxes.length} commande(s) ?`)) {
+        return;
+    }
+    
+    const orderIds = Array.from(checkboxes).map(cb => cb.dataset.orderId);
+    
+    try {
+        const response = await fetch(`/api/delete-orders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderIds })
+        });
+
+        if (response.ok) {
+            alert(`${checkboxes.length} commande(s) supprimée(s) avec succès !`);
+            allOrders = allOrders.filter(order => !orderIds.includes(order.id));
+            renderPage();
+            // Réinitialiser les checkboxes
+            document.getElementById('selectAllCheckbox').checked = false;
+        } else {
+            const error = await response.json();
+            alert(`Erreur: ${error.message}`);
+        }
+    } catch (error) {
+        console.error('Erreur lors de la suppression multiple:', error);
+        alert('Erreur réseau lors de la suppression');
+    }
+}
+
+// Fonction pour mettre à jour la barre d'actions en masse
+function updateBulkActionsBar() {
+    const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (checkboxes.length > 0) {
+        bulkActionsBar.classList.add('show');
+        selectedCount.textContent = `${checkboxes.length} commande(s) sélectionnée(s)`;
+    } else {
+        bulkActionsBar.classList.remove('show');
+        selectedCount.textContent = '0 sélectionné(s)';
+        document.getElementById('selectAllCheckbox').checked = false;
+    }
+}
+
+// Fonction pour mettre à jour la barre d'actions en masse
+function updateBulkActionsBar() {
+    const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (checkboxes.length > 0) {
+        bulkActionsBar.classList.add('show');
+        selectedCount.textContent = `${checkboxes.length} commande(s) sélectionnée(s)`;
+    } else {
+        bulkActionsBar.classList.remove('show');
+        selectedCount.textContent = '0 sélectionné(s)';
+        document.getElementById('selectAllCheckbox').checked = false;
+    }
+}
+
+// Fonction pour sélectionner/désélectionner tous les checkboxes
+window.toggleSelectAll = function(selectAllCheckbox) {
+    const checkboxes = document.querySelectorAll('.order-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = selectAllCheckbox.checked;
+    });
+    updateBulkActionsBar();
 }
 
 // Fonction pour utiliser les headers de tri
