@@ -29,6 +29,36 @@
             padding: 16px;
         }
         .modal-custom .modal-content { box-shadow: 0 6px 24px rgba(0,0,0,0.25); }
+
+        /* Styles spécifiques pour le tableau du gestionnaire */
+        /* Réduire légèrement la police et compacter les cellules (paddings ≈ moitié) */
+        #ordersTableContainer .table {
+            font-size: 0.85rem; /* réduire la police pour compactage optimal */
+            margin-bottom: 0;
+        }
+        #ordersTableContainer .table th,
+        #ordersTableContainer .table td {
+            padding: 0.3rem 0.4rem; /* diminuer les paddings à environ la moitié */
+            vertical-align: middle;
+            line-height: 1.4;
+        }
+
+        /* Ajuster les en-têtes du tableau */
+        #ordersTableContainer .table thead th {
+            font-size: 0.8rem;
+            font-weight: 600;
+            background-color: #e7f3ff;
+        }
+
+        /* Ajuster la barre d'actions en masse pour qu'elle prenne moins de place */
+        .bulk-actions-bar { font-size: 0.9rem; }
+        .bulk-actions-bar .container { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .bulk-actions-bar .btn { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
+
+        /* Version mobile: cartes plus compactes */
+        #ordersCardsContainer .card { margin-bottom: 0.5rem; font-size: 0.9rem; }
+        #ordersCardsContainer .card-body { padding: 0.6rem; }
+        #ordersCardsContainer .card-title { font-size: 0.95rem; margin-bottom: 0.4rem; }
     </style>
 </head>
 <body>
