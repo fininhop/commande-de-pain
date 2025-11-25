@@ -27,21 +27,7 @@ window.fetchOrders = async function() {
     errorMessage.classList.add('hidden');
 
     try {
-        console.log('Fetching orders from /api/get-orders...');
-        const response = await fetch('/api/get-orders');
 
-        if (!response.ok) {
-            let errorResult = { message: `Erreur HTTP ${response.status}` };
-            try {
-                 errorResult = await response.json();
-            } catch(e) { /* Pas de JSON si le serveur a planté */ }
-            
-            console.error('API Response Error:', errorResult);
-            throw new Error(errorResult.message || `Erreur HTTP ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log('API Response:', result);
         allOrders = result.orders || [];
 
         loadingMessage.textContent = '';
@@ -139,7 +125,7 @@ function renderPage() {
         // Cellule d'actions (Options)
         const actionsCell = row.insertCell(7);
         actionsCell.innerHTML = `
-            <button class="action-btn" onclick="showOrderOptions('${order.id}', '${order.name}', '${order.email}')">
+            <button class="action-btn" onclick="showOrderOptions('${order.id}', '${order.name}', '${order.email}', '${order.phone || ''}')">
                 ⋮ Options
             </button>
         `;
@@ -211,7 +197,7 @@ function createPagination() {
 }
 
 // Fonction pour afficher les options
-window.showOrderOptions = function(orderId, orderName, orderEmail) {
+window.showOrderOptions = function(orderId, orderName, orderEmail, orderPhone) {
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.id = 'optionsModal';
@@ -220,7 +206,7 @@ window.showOrderOptions = function(orderId, orderName, orderEmail) {
             <span class="close" onclick="document.getElementById('optionsModal').remove()">×</span>
             <h2>Options pour ${orderName}</h2>
             <div class="modal-buttons">
-                <button class="modal-btn email-btn" onclick="openEmailClient('${orderEmail}', '${orderName}')">
+                <button class="modal-btn email-btn" onclick="openEmailClient('${orderEmail}', '${orderName}', '${orderPhone}')">
                     📧 Envoyer un Email
                 </button>
                 <button class="modal-btn delete-btn" onclick="deleteOrder('${orderId}', '${orderName}')">
@@ -236,7 +222,7 @@ window.showOrderOptions = function(orderId, orderName, orderEmail) {
 }
 
 // Fonction pour ouvrir le client email
-window.openEmailClient = function(email, orderName) {
+window.openEmailClient = function(email, orderName, phone) {
     const userAgent = navigator.userAgent.toLowerCase();
     const isAndroid = /android/.test(userAgent);
     const isIOS = /iphone|ipad|ipot/.test(userAgent);
@@ -248,8 +234,28 @@ window.openEmailClient = function(email, orderName) {
     const yahooUrl = `https://compose.mail.yahoo.com/?to=${email}&subject=${subject}&body=${body}`;
 
     if (isAndroid || isIOS) {
-        // Sur mobile, ouvrir directement le client email par défaut
-        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+        // Sur mobile, proposer email et appel
+        const mobileModal = document.createElement('div');
+        mobileModal.className = 'modal';
+        mobileModal.id = 'mobileActionsModal';
+        mobileModal.innerHTML = `
+            <div class="modal-content">
+                <span class="close" onclick="document.getElementById('mobileActionsModal').remove()">×</span>
+                <h2>Choisir une action</h2>
+                <div class="modal-buttons">
+                    <button class="modal-btn email-btn" onclick="window.location.href = 'mailto:${email}?subject=${subject}&body=${body}'; document.getElementById('mobileActionsModal').remove(); document.getElementById('optionsModal').remove();">
+                        📧 Envoyer un Email
+                    </button>
+                    <button class="modal-btn phone-btn" onclick="window.location.href = 'tel:${(phone || '').replace(/[^0-9+\- ]/g, '') || email.replace(/[^0-9+\- ]/g, '')}'; document.getElementById('mobileActionsModal').remove(); document.getElementById('optionsModal').remove();">
+                        📞 Appeler
+                    </button>
+                    <button class="modal-btn cancel-btn" onclick="document.getElementById('mobileActionsModal').remove()">
+                        ❌ Annuler
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(mobileModal);
     } else if (isDesktop) {
         // Sur desktop, proposer un choix
         const emailModal = document.createElement('div');
