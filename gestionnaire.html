@@ -47,26 +47,30 @@
         </div>
     </div>
     
-        <script src="config.js"></script> 
-        <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <script src="config.js"></script> 
+
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    
+    <script>
+        // Si cette ligne affiche "undefined", les scripts Firebase ne sont pas chargés.
+        console.log("TEST: Statut de l'objet firebase avant l'initialisation:", typeof firebase); 
         
-        <script>
-            const APP_NAME = 'CommandeDePain';
-            // Cette ligne DOIT fonctionner ici si les SDK sont chargés
-            console.log("TEST Firebase object status:", typeof firebase); 
-            
-            if (!firebase.apps.some(app => app.name === APP_NAME)) {
-                try {
-                    firebase.initializeApp(firebaseConfig, APP_NAME);
-                    console.log(`Firebase client initialisé avec succès.`);
-                } catch (error) {
-                    console.error("Erreur lors de l'initialisation de Firebase client:", error);
-                }
+        const APP_NAME = 'CommandeDePain';
+        
+        // La ligne où l'erreur se produit dans votre script-gestionnaire.js (ligne 13)
+        // Nous la mettons ici pour garantir que 'firebase' existe
+        if (typeof firebase !== 'undefined' && !firebase.apps.some(app => app.name === APP_NAME)) {
+            try {
+                firebase.initializeApp(firebaseConfig, APP_NAME);
+                console.log(`Firebase client initialisé avec succès.`);
+            } catch (error) {
+                console.error("Erreur lors de l'initialisation de Firebase client:", error);
             }
-        </script>
-        
-        <script src="script-gestionnaire.js"></script>
+        }
+    </script>
+    
+    <script src="script-gestionnaire.js"></script>
         
 </body>
 </html>
