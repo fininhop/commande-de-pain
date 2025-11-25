@@ -214,13 +214,15 @@ window.showOrderOptions = function(orderId, orderName, orderEmail, orderPhone) {
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.id = 'optionsModal';
-    // Build modal content with conditional phone button
+    // Build modal content with conditional phone button (only on Android)
     const sanitizedPhone = (orderPhone || '').trim();
     const hasPhone = isValidPhoneNumber(sanitizedPhone);
+    const isAndroid = /android/.test(navigator.userAgent.toLowerCase());
 
     let buttonsHtml = '';
     buttonsHtml += `<button class="modal-btn email-btn" onclick="openEmailClient('${orderEmail}', '${orderName}', '${sanitizedPhone.replace(/'/g, "\\'")}')">📧 Envoyer un Email</button>`;
-    if (hasPhone) {
+    // Only show call button on Android devices
+    if (hasPhone && isAndroid) {
         buttonsHtml += `<button class="modal-btn phone-btn" onclick="window.location.href='tel:${sanitizedPhone.replace(/[^0-9+\- ]/g,'')}'; document.getElementById('optionsModal').remove();">📞 Appeler</button>`;
     }
     buttonsHtml += `<button class="modal-btn delete-btn" onclick="deleteOrder('${orderId}', '${orderName}')">🗑️ Supprimer la Commande</button>`;
@@ -442,5 +444,14 @@ function setupSortHeaders() {
 // Chargement automatique au démarrage de la page
 document.addEventListener('DOMContentLoaded', () => {
     setupSortHeaders();
+    // Detect Android devices and add class for targeting styles
+    try {
+        const ua = navigator.userAgent.toLowerCase();
+        if (/android/.test(ua)) {
+            document.body.classList.add('android');
+        }
+    } catch (e) {
+        // ignore
+    }
     fetchOrders();
 });

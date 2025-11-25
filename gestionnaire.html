@@ -215,6 +215,15 @@
             font-weight: bold;
             color: #2c3e50;
         }
+
+        /* Android-specific touch optimizations */
+        body.android .container { padding: 28px; }
+        body.android .action-btn { padding: 12px 18px; font-size: 16px; border-radius: 8px; }
+        body.android .modal-btn { padding: 16px 20px; font-size: 16px; border-radius: 8px; }
+        body.android .pagination-btn { padding: 12px 16px; font-size: 15px; }
+        body.android input[type="checkbox"] { width: 22px; height: 22px; }
+        body.android table th, body.android table td { padding: 14px; font-size: 15px; }
+        body.android .bulk-actions-bar { padding: 18px; gap: 12px; }
     </style>
 </head>
 <body>
