@@ -17,7 +17,7 @@ if (!admin.apps.length) {
     }
 }
 
-const db = admin.firestore(); // Utilisez admin.firestore
+const db = admin.firestore(); // Utilisez admin.firestor
 
 export default async (req, res) => {
     if (req.method !== 'POST') {
