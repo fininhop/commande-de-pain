@@ -27,7 +27,20 @@ window.fetchOrders = async function() {
     errorMessage.classList.add('hidden');
 
     try {
+        // Appel de la fonction Serverless Vercel
+        console.log('Fetching orders from /api/get-orders...');
+        const response = await fetch('/api/get-orders');
 
+        if (!response.ok) {
+            let errorResult = { message: `Erreur HTTP ${response.status}` };
+            try {
+                errorResult = await response.json();
+            } catch (e) { /* Pas de JSON si le serveur a planté */ }
+            console.error('API Response Error:', errorResult);
+            throw new Error(errorResult.message || `Erreur HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
         allOrders = result.orders || [];
 
         loadingMessage.textContent = '';
