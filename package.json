@@ -1,0 +1,21 @@
+{
+  "name": "gestionnaire-pain-bio",
+  "version": "1.0.0",
+  "description": "Système de gestion des commandes Pain Bio utilisant Vercel et Firebase Firestore.",
+  "main": "index.html",
+  "scripts": {
+    "start": "echo 'Le projet est géré par Vercel. Utilisez la CLI Vercel pour le développement local si nécessaire.'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.6.0"
+  },
+  "keywords": [
+    "vercel",
+    "serverless",
+    "firebase",
+    "node"
+  ],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire de Commandes Pain Bio</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f5f5f5; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+        th { background-color: #3498db; color: white; }
+        .status-message { padding: 10px; border-radius: 4px; margin-bottom: 15px; font-weight: bold; text-align: center; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .items-list { list-style: none; padding: 0; margin: 0; }
+        .items-list li { margin-bottom: 4px; }
+        button { background-color: #27ae60; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 15px; transition: background-color 0.3s; }
+        button:hover { background-color: #2ecc71; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ Tableau de Bord des Commandes</h1>
+        <p style="text-align: right; margin-bottom: 10px;"><a href="index.html" style="color: #3498db; text-decoration: underline;">Retour au Formulaire de Commande</a></p>
+
+        <button onclick="fetchOrders()">Actualiser les commandes</button>
+
+        <p id="loadingMessage">Chargement des commandes...</p>
+        <p id="errorMessage" class="status-message error hidden"></p>
+        
+        <div id="ordersList">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date Commande</th>
+                        <th>Nom Client</th>
+                        <th>Email / Téléphone</th>
+                        <th>Date Retrait</th>
+                        <th>Renouvellement</th>
+                        <th>Détail des Articles</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script-gestionnaire.js"></script>
+</body>
+</html>
