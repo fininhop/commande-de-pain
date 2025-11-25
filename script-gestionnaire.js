@@ -36,7 +36,7 @@ window.fetchOrders = async function() {
 
     try {
         // Appel de la fonction Serverless Vercel
-        const response = await fetch('/api/get-order');
+        const response = await fetch('/api/get-orders');
 
         if (!response.ok) {
             // Tenter de lire le message d'erreur JSON de l'API
