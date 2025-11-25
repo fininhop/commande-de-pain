@@ -201,24 +201,37 @@ window.showOrderOptions = function(orderId, orderName, orderEmail, orderPhone) {
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.id = 'optionsModal';
+    // Build modal content with conditional phone button
+    const sanitizedPhone = (orderPhone || '').trim();
+    const hasPhone = isValidPhoneNumber(sanitizedPhone);
+
+    let buttonsHtml = '';
+    buttonsHtml += `<button class="modal-btn email-btn" onclick="openEmailClient('${orderEmail}', '${orderName}', '${sanitizedPhone.replace(/'/g, "\\'")}')">📧 Envoyer un Email</button>`;
+    if (hasPhone) {
+        buttonsHtml += `<button class="modal-btn phone-btn" onclick="window.location.href='tel:${sanitizedPhone.replace(/[^0-9+\- ]/g,'')}'; document.getElementById('optionsModal').remove();">📞 Appeler</button>`;
+    }
+    buttonsHtml += `<button class="modal-btn delete-btn" onclick="deleteOrder('${orderId}', '${orderName}')">🗑️ Supprimer la Commande</button>`;
+    buttonsHtml += `<button class="modal-btn cancel-btn" onclick="document.getElementById('optionsModal').remove()">❌ Annuler</button>`;
+
     modal.innerHTML = `
         <div class="modal-content">
             <span class="close" onclick="document.getElementById('optionsModal').remove()">×</span>
             <h2>Options pour ${orderName}</h2>
-            <div class="modal-buttons">
-                <button class="modal-btn email-btn" onclick="openEmailClient('${orderEmail}', '${orderName}', '${orderPhone}')">
-                    📧 Envoyer un Email
-                </button>
-                <button class="modal-btn delete-btn" onclick="deleteOrder('${orderId}', '${orderName}')">
-                    🗑️ Supprimer la Commande
-                </button>
-                <button class="modal-btn cancel-btn" onclick="document.getElementById('optionsModal').remove()">
-                    ❌ Annuler
-                </button>
-            </div>
+            <div class="modal-buttons">${buttonsHtml}</div>
         </div>
     `;
     document.body.appendChild(modal);
+}
+
+// Phone validation helper — simple but practical
+function isValidPhoneNumber(phone) {
+    if (!phone) return false;
+    // Accept digits, spaces, +, dash, parentheses — require at least 6 digits
+    const digits = phone.replace(/[^0-9]/g, '');
+    if (digits.length < 6) return false;
+    // Basic pattern check (allow + at start)
+    const normalized = phone.trim();
+    return /^\+?[0-9 ()\-]+$/.test(normalized);
 }
 
 // Fonction pour ouvrir le client email
