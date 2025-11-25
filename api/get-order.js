@@ -5,25 +5,28 @@
 
 const admin = require('firebase-admin');
 
+// Initialisation de l'Admin SDK : seulement s'il n'est pas déjà initialisé
 if (!admin.apps.length) {
     try {
-        // Le contenu de cette variable doit être le JSON de votre clé de service Firebase Admin
+        // La clé de service est lue depuis la variable d'environnement Vercel
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT); 
         
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
         });
+        global.db = admin.firestore(); // Stocker l'instance de db globalement
+        
     } catch (e) {
-        // Si cette étape plante (par exemple, la variable d'environnement n'est pas définie ou est mal formatée)
-        console.error("Erreur critique d'initialisation Admin SDK:", e.message);
-        // Cela provoquera l'erreur 500
+        console.error("Erreur CRITIQUE d'initialisation Admin SDK:", e.message);
+        global.adminInitError = e; // Conserver l'erreur pour la renvoyer plus tard
     }
+} else {
+    global.db = admin.firestore();
 }
 
-const db = admin.firestore(); // Utilisez admin.firestor
-// Utilisation du format Vercel pour l'exportation
+// Le gestionnaire de la fonction Serverless Vercel
 module.exports = async (req, res) => {
-    // Si une erreur d'initialisation critique s'est produite
+    // Vérification de l'erreur d'initialisation
     if (global.adminInitError) {
         return res.status(500).json({ 
             message: 'Erreur de configuration serveur. Clé de service Firebase invalide.',
@@ -37,11 +40,9 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // CORRECTION 1: Utiliser le champ 'timestamp' ou 'date' pour le tri, 
-        // selon le champ que vous utilisez lors de la soumission de commande.
-        // J'utilise 'timestamp' si vous le définissez côté serveur (recommandé).
-        const snapshot = await db.collection('orders')
-            .orderBy('timestamp', 'desc') // Changez 'timestamp' si vous utilisez un autre champ (ex: 'date')
+        // Récupérer les commandes triées par le champ 'timestamp' de l'enregistrement
+        const snapshot = await global.db.collection('orders')
+            .orderBy('timestamp', 'desc') 
             .get();
 
         const orders = snapshot.docs.map(doc => {
@@ -51,16 +52,15 @@ module.exports = async (req, res) => {
                 name: data.name || 'N/A',
                 email: data.email || 'N/A',
                 phone: data.phone || 'N/A',
-                date: data.date,
-                renouveler: data.renouveler,
+                date: data.date, // Date de retrait
+                renouveler: data.renouveler, 
                 items: data.items,
-                // CORRECTION 2: S'assurer que le champ existe avant d'appeler .toDate()
-                timestamp: data.timestamp ? data.timestamp.toDate().toISOString() : null,
-                // On garde également la date de livraison simple si elle est présente
-                orderDate: data.date 
+                // Conversion du Timestamp Firestore en chaîne ISO
+                createdAt: data.timestamp ? data.timestamp.toDate().toISOString() : null,
             };
         });
 
+        // Succès : renvoyer le tableau d'objets 'orders'
         res.status(200).json({ orders });
 
     } catch (error) {
