@@ -257,6 +257,8 @@ function updateBulkActionsBar() {
     const checked = document.querySelectorAll('.order-checkbox:checked').length;
     const bar = document.getElementById('bulkActionsBar');
     const countEl = document.getElementById('bulkSelectedCount');
+    // Debug log to help diagnose visibility issues
+    console.debug('[bulk] checked=', checked, 'bar=', !!bar, 'countEl=', !!countEl);
     if (bar) {
         if (checked > 0) {
             bar.classList.remove('d-none');

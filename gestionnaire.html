@@ -49,9 +49,14 @@
                 <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
                 <!-- Barre d'actions en masse -->
-                <div id="bulkActionsBar" class="bulk-actions-bar alert alert-secondary d-flex align-items-center justify-content-between d-none">
-                    <span id="bulkSelectedCount" class="fw-bold">0 sélectionné(s)</span>
-                    <button id="bulkDeleteBtn" class="btn btn-danger" onclick="deleteSelectedOrders()">🗑️ Supprimer les sélectionnés</button>
+                <div id="bulkActionsBar" class="bulk-actions-bar alert alert-secondary d-flex align-items-center justify-content-between d-none position-fixed bottom-0 start-0 end-0 mx-3 mb-3 shadow">
+                    <div class="container d-flex align-items-center justify-content-between py-2">
+                        <div><span id="bulkSelectedCount" class="fw-bold">0 sélectionné(s)</span></div>
+                        <div>
+                            <button id="bulkDeleteBtn" class="btn btn-danger me-2" onclick="deleteSelectedOrders()">🗑️ Supprimer les sélectionnés</button>
+                            <button class="btn btn-light" onclick="document.getElementById('bulkActionsBar').classList.add('d-none')">✖️ Fermer</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Desktop: table view (md and up) -->
