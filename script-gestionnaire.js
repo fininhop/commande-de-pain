@@ -3,21 +3,6 @@
 // Gère l'affichage des commandes récupérées via l'API Vercel /api/get-orders
 // =======================================================
 
-// Ligne de débogage pour confirmer si firebase est défini
-console.log("Firebase object status:", typeof firebase); 
-
-const APP_NAME = 'CommandeDePain';
-
-// Initialisation simplifiée de Firebase (SDK Client)
-if (!firebase.apps.some(app => app.name === APP_NAME)) {
-    try {
-        firebase.initializeApp(firebaseConfig, APP_NAME);
-        console.log(`Firebase client initialisé sous le nom '${APP_NAME}'.`);
-    } catch (error) {
-        console.error("Erreur lors de l'initialisation de Firebase client:", error);
-    }
-} 
-
 // Rendre la fonction accessible globalement pour le bouton "Actualiser"
 window.fetchOrders = async function() {
     const ordersTableBody = document.getElementById('ordersTableBody');
