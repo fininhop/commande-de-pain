@@ -400,6 +400,36 @@ window.deleteSelectedOrders = async function() {
     }
 }
 
+// Fonction pour supprimer toutes les commandes (utilitaire admin)
+window.deleteAllOrders = async function() {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer TOUTES les commandes ? Cette action est irréversible.')) return;
+    try {
+        const orderIds = allOrders.map(o => o.id);
+        if (orderIds.length === 0) {
+            alert('Aucune commande à supprimer.');
+            return;
+        }
+        const response = await fetch(`/api/delete-orders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderIds })
+        });
+
+        if (response.ok) {
+            alert(`${orderIds.length} commande(s) supprimée(s) avec succès !`);
+            allOrders = [];
+            renderPage();
+            const selectAll = document.getElementById('selectAllCheckbox'); if (selectAll) selectAll.checked = false;
+        } else {
+            const error = await response.json();
+            alert(`Erreur: ${error.message}`);
+        }
+    } catch (error) {
+        console.error('Erreur lors de la suppression de toutes les commandes:', error);
+        alert('Erreur réseau lors de la suppression de toutes les commandes');
+    }
+}
+
 // Select all toggle
 window.toggleSelectAll = function(checked) {
     document.querySelectorAll('.order-checkbox').forEach(cb => { cb.checked = checked; });
