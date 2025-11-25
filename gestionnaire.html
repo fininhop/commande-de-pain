@@ -50,7 +50,27 @@
         <script src="config.js"></script> 
         <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
         <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+        
+        <script>
+            const APP_NAME = 'CommandeDePain';
+            // Cette ligne DOIT fonctionner ici si les SDK sont chargés
+            console.log("TEST Firebase object status:", typeof firebase); 
+            
+            if (!firebase.apps.some(app => app.name === APP_NAME)) {
+                try {
+                    firebase.initializeApp(firebaseConfig, APP_NAME);
+                    console.log(`Firebase client initialisé avec succès.`);
+                } catch (error) {
+                    console.error("Erreur lors de l'initialisation de Firebase client:", error);
+                }
+            }
+        </script>
+        
         <script src="script-gestionnaire.js"></script>
         
 </body>
 </html>
+
+
+
+
