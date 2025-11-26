@@ -95,11 +95,34 @@ window.updateTotal = function() {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Vérifier qu'un utilisateur est connecté/enregistré
+    const stored = localStorage.getItem('currentUser');
+    let currentUser = null;
+    try { currentUser = stored ? JSON.parse(stored) : null; } catch (e) { currentUser = null; }
+
+    if (!currentUser) {
+        // Redirige vers la page d'enregistrement si l'utilisateur n'est pas identifié
+        window.location.href = 'register.html';
+        return;
+    }
+
     const form = document.getElementById('clientOrderForm');
     const statusMessage = document.getElementById('statusMessage');
 
     // Initialisation du total
     updateTotal();
+
+    // Auto-remplir les champs client avec les données de l'utilisateur connecté
+    try {
+        if (currentUser) {
+            const nameInput = document.getElementById('clientName');
+            const emailInput = document.getElementById('clientEmail');
+            const phoneInput = document.getElementById('clientPhone');
+            if (nameInput && currentUser.name) nameInput.value = currentUser.name;
+            if (emailInput && currentUser.email) emailInput.value = currentUser.email;
+            if (phoneInput && currentUser.phone) phoneInput.value = currentUser.phone;
+        }
+    } catch (e) { /* ignore */ }
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -139,7 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
             phone: document.getElementById('clientPhone').value.trim(), // Ajout du téléphone
             date: document.getElementById('orderDate').value,
             renouveler: document.querySelector('input[name="renouveler"]:checked').value, // Renouvellement
-            items: items
+            items: items,
+            userId: currentUser && currentUser.userId ? currentUser.userId : (currentUser && currentUser.id ? currentUser.id : null)
         };
 
         // 3. Envoi à l'API Vercel

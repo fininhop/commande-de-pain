@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const { name, email, phone, date, renouveler, items } = req.body;
+        const { name, email, phone, date, renouveler, items, userId } = req.body;
         
         // Vérification minimale des données
         if (!name || !email || !date || !items || items.length === 0) {
@@ -43,6 +43,7 @@ module.exports = async (req, res) => {
                 quantity: item.quantity
                 // Le prix n'est pas stocké pour éviter les incohérences si le prix change
             })),
+            userId: userId || null, // Associer la commande à un utilisateur enregistré
             timestamp: admin.firestore.FieldValue.serverTimestamp(), // Date d'enregistrement dans Firestore
         };
 
