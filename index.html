@@ -54,27 +54,15 @@
     <div class="container py-4">
         <div class="form-container mx-auto shadow-sm">
         <h1>Commande de pain bio cuits au feu de bois</h1>
-        <p style="text-align: right; margin-bottom: 10px;"><a href="gestionnaire.html" style="color: #3498db; text-decoration: underline;">Accéder au Gestionnaire</a></p>
+        <p style="text-align: right; margin-bottom: 10px;">
+            <a href="gestionnaire.html" style="color: #3498db; text-decoration: underline;">Accéder au Gestionnaire</a> | 
+            <a href="#" id="logoutLink" style="color: #e74c3c; text-decoration: underline;">Se déconnecter</a>
+        </p>
         
         <form id="clientOrderForm"> 
             
             <div class="form-group">
-                <label><span class="question-number">1</span> Nom complet</label>
-                <input type="text" id="clientName" name="nom_complet" required class="form-control">
-            </div>
-
-            <div class="form-group">
-                <label><span class="question-number">2</span> E-mail</label>
-                <input type="email" id="clientEmail" name="email" required class="form-control">
-            </div>
-
-            <div class="form-group">
-                <label><span class="question-number">3</span> Numéro de téléphone</label>
-                <input type="tel" id="clientPhone" name="telephone" required class="form-control">
-            </div>
-
-            <div class="form-group">
-                <label><span class="question-number">4</span> Type de pain</label>
+                <label><span class="question-number">1</span> Type de pain</label>
                 
                 <div class="product-section">
                     <div class="basket-info" id="basket-info-message">

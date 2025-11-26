@@ -101,8 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try { currentUser = stored ? JSON.parse(stored) : null; } catch (e) { currentUser = null; }
 
     if (!currentUser) {
-        // Redirige vers la page d'enregistrement si l'utilisateur n'est pas identifié
-        window.location.href = 'register.html';
+        // Redirige vers la page de connexion si l'utilisateur n'est pas identifié
+        window.location.href = 'login.html';
         return;
     }
 
@@ -112,17 +112,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialisation du total
     updateTotal();
 
-    // Auto-remplir les champs client avec les données de l'utilisateur connecté
-    try {
-        if (currentUser) {
-            const nameInput = document.getElementById('clientName');
-            const emailInput = document.getElementById('clientEmail');
-            const phoneInput = document.getElementById('clientPhone');
-            if (nameInput && currentUser.name) nameInput.value = currentUser.name;
-            if (emailInput && currentUser.email) emailInput.value = currentUser.email;
-            if (phoneInput && currentUser.phone) phoneInput.value = currentUser.phone;
-        }
-    } catch (e) { /* ignore */ }
+    // Bouton déconnexion
+    const logoutLink = document.getElementById('logoutLink');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        });
+    }
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -157,13 +155,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Création de l'objet de commande pour l'API
         const orderData = {
-            name: document.getElementById('clientName').value.trim(),
-            email: document.getElementById('clientEmail').value.trim(),
-            phone: document.getElementById('clientPhone').value.trim(), // Ajout du téléphone
+            name: currentUser.name,
+            email: currentUser.email,
+            phone: currentUser.phone,
             date: document.getElementById('orderDate').value,
             renouveler: document.querySelector('input[name="renouveler"]:checked').value, // Renouvellement
             items: items,
-            userId: currentUser && currentUser.userId ? currentUser.userId : (currentUser && currentUser.id ? currentUser.id : null)
+            userId: currentUser.userId || currentUser.id || null
         };
 
         // 3. Envoi à l'API Vercel

@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const { name, email, phone } = req.body;
+        const { name, email, phone, address } = req.body;
         if (!name || !email) {
             return res.status(400).json({ message: 'Nom et email requis' });
         }
@@ -37,6 +37,7 @@ module.exports = async (req, res) => {
             name: name.trim(),
             email: normalizedEmail,
             phone: phone ? String(phone).trim() : '',
+            address: address ? String(address).trim() : '',
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         };
 

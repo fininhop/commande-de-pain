@@ -15,26 +15,30 @@
     <div class="container py-5">
         <div class="card shadow-sm mx-auto">
             <div class="card-body">
-                <h3 class="card-title text-center mb-3">S'enregistrer / Se connecter</h3>
-                <p class="text-muted small">Entrez votre nom et email pour vous enregistrer. Si votre email existe déjà, vous serez connecté.</p>
+                <h3 class="card-title text-center mb-3">Créer un compte</h3>
+                <p class="text-muted small mb-3">Complétez le formulaire pour vous enregistrer.</p>
 
                 <form id="registerForm">
                     <div class="mb-2">
-                        <label class="form-label">Nom complet</label>
+                        <label class="form-label">Nom complet *</label>
                         <input id="regName" class="form-control" required />
                     </div>
                     <div class="mb-2">
-                        <label class="form-label">Email</label>
+                        <label class="form-label">Email *</label>
                         <input id="regEmail" type="email" class="form-control" required />
                     </div>
+                    <div class="mb-2">
+                        <label class="form-label">Téléphone *</label>
+                        <input id="regPhone" class="form-control" required />
+                    </div>
                     <div class="mb-3">
-                        <label class="form-label">Téléphone (optionnel)</label>
-                        <input id="regPhone" class="form-control" />
+                        <label class="form-label">Adresse *</label>
+                        <input id="regAddress" class="form-control" required />
                     </div>
 
                     <div class="d-grid gap-2">
-                        <button class="btn btn-primary" type="submit">S'enregistrer / Se connecter</button>
-                        <a href="index.html" class="btn btn-outline-secondary">Retour (si déjà connecté)</a>
+                        <button class="btn btn-primary" type="submit">S'enregistrer</button>
+                        <a href="login.html" class="btn btn-outline-secondary">Retour à la connexion</a>
                     </div>
                 </form>
 
