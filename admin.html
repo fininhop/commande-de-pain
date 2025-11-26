@@ -19,6 +19,28 @@
         .btn-outline-primary:hover { background: #3498db; color: #fff; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
         .btn-secondary { background: linear-gradient(45deg,#6c757d,#5a6268); border: none; color: #fff; transition: .3s; }
         .btn-secondary:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.15); background: linear-gradient(45deg,#5a6268,#6c757d); }
+        .order-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #e9ecef; }
+        .order-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        .order-header { background: linear-gradient(45deg,#f8f9fa,#e9ecef); padding: 12px 16px; border-radius: 12px 12px 0 0; border-bottom: 1px solid #dee2e6; }
+        .order-title { font-weight: 600; color: #2d3748; margin: 0; font-size: 1.1rem; }
+        .order-date { color: #718096; font-size: 0.9rem; margin: 4px 0 0 0; }
+        .order-body { padding: 16px; }
+        .order-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .info-item { display: flex; flex-direction: column; gap: 4px; }
+        .info-label { font-weight: 600; color: #4a5568; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-value { color: #2d3748; font-size: 0.95rem; }
+        .items-section { background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
+        .items-title { font-weight: 600; color: #2d3748; margin-bottom: 8px; font-size: 0.9rem; }
+        .item-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+        .item-row:last-child { border-bottom: none; }
+        .order-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .badge { font-size: 0.8rem; padding: 4px 8px; }
+        @media (max-width: 768px) { 
+            .admin-controls { flex-direction: column; align-items: stretch; }
+            .order-info { grid-template-columns: 1fr; }
+            .order-actions { flex-direction: column; }
+            .order-card { margin-bottom: 16px; }
+        }
     </style>
 </head>
 <body>
@@ -44,14 +66,23 @@
         </div>
 
         <div id="adminArea" class="d-none">
-            <div class="admin-controls d-flex justify-content-between align-items-center mb-2">
-                <div>
-                    <button id="refreshBtn" class="btn btn-sm btn-outline-primary">Actualiser</button>
+            <div class="admin-controls d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div class="d-flex gap-2">
+                    <button id="refreshBtn" class="btn btn-sm btn-outline-primary">🔄 Actualiser</button>
+                    <button id="logoutAdmin" class="btn btn-sm btn-secondary">🚪 Déconnexion</button>
                 </div>
-                <div id="adminMessage"></div>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="text-muted small">Trier par:</span>
+                    <select id="sortSelect" class="form-select form-select-sm" style="width: auto;">
+                        <option value="createdAt">📅 Date de commande</option>
+                        <option value="date">📍 Date de retrait</option>
+                        <option value="name">👤 Nom</option>
+                        <option value="renouveler">🔄 Renouvellement</option>
+                    </select>
+                </div>
             </div>
 
-            <div id="ordersTableContainer"></div>
+            <div id="ordersContainer" class="row g-3"></div>
         </div>
     </div>
 

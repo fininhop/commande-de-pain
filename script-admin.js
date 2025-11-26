@@ -29,54 +29,118 @@ function showToast(title, message, type = 'info') {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const adminLogin = document.getElementById('adminLogin');
-    const adminArea = document.getElementById('adminArea');
-    const adminForm = document.getElementById('adminLoginForm');
-    const tokenInput = document.getElementById('adminTokenInput');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const ordersTableContainer = document.getElementById('ordersTableContainer');
-    const adminMessage = document.getElementById('adminMessage');
-    const logoutAdmin = document.getElementById('logoutAdmin');
+    const sortSelect = document.getElementById('sortSelect');
+    const ordersContainer = document.getElementById('ordersContainer');
 
-    function showMessage(text, type='') {
-        adminMessage.innerHTML = text ? `<div class="text-${type}">${text}</div>` : '';
-    }
+    // Gestionnaire de tri
+    sortSelect.addEventListener('change', () => {
+        currentSortBy = sortSelect.value;
+        if (currentOrders.length > 0) {
+            renderOrders(currentOrders, currentSortBy);
+        }
+    });
 
-    function renderOrders(orders) {
+    function renderOrders(orders, sortBy = 'createdAt') {
         if (!orders || !orders.length) {
-            ordersTableContainer.innerHTML = '<div class="alert alert-info">Aucune commande trouvée.</div>';
+            ordersContainer.innerHTML = '<div class="alert alert-info text-center py-5"><h5>📭 Aucune commande trouvée</h5><p class="mb-0">Il n\'y a pas encore de commandes à afficher.</p></div>';
             return;
         }
-        let html = '<table class="table table-sm table-striped">';
-        html += '<thead><tr><th>Id</th><th>Date Cmd</th><th>Nom</th><th>Contact</th><th>Retrait</th><th>Renouveler</th><th>Articles</th><th>Actions</th></tr></thead><tbody>';
-        orders.forEach(o => {
-            const items = (o.items || []).map(it => `${it.quantity}× ${it.name}`).join('<br>');
+
+        // Trier les commandes
+        const sortedOrders = [...orders].sort((a, b) => {
+            let aVal, bVal;
+            switch (sortBy) {
+                case 'createdAt':
+                    aVal = new Date(a.createdAt || 0);
+                    bVal = new Date(b.createdAt || 0);
+                    return bVal - aVal; // Plus récent en premier
+                case 'date':
+                    aVal = a.date || '';
+                    bVal = b.date || '';
+                    return aVal.localeCompare(bVal);
+                case 'name':
+                    aVal = (a.name || '').toLowerCase();
+                    bVal = (b.name || '').toLowerCase();
+                    return aVal.localeCompare(bVal);
+                case 'renouveler':
+                    aVal = (a.renouveler || '').toLowerCase();
+                    bVal = (b.renouveler || '').toLowerCase();
+                    return aVal.localeCompare(bVal);
+                default:
+                    return 0;
+            }
+        });
+
+        // Générer les cartes
+        let html = '';
+        sortedOrders.forEach(o => {
+            const items = (o.items || []).map(it => 
+                `<div class="item-row"><span>${it.quantity} × ${it.name}</span><span class="text-muted">${it.price ? '€' + (it.price * it.quantity).toFixed(2) : ''}</span></div>`
+            ).join('');
+            
             const rn = (o.renouveler || '').toString().trim().toLowerCase();
             const rnBadge = rn === 'oui' 
-                ? '<span class="badge bg-success">Oui</span>' 
+                ? '<span class="badge bg-success">🔄 Oui</span>' 
                 : rn === 'non' 
-                    ? '<span class="badge bg-secondary">Non</span>' 
-                    : '<span class="text-muted">—</span>';
+                    ? '<span class="badge bg-secondary">❌ Non</span>' 
+                    : '<span class="badge bg-light text-muted">—</span>';
             
-            html += `<tr class="order-row" data-order-id="${o.id}" data-order-date="${o.date || ''}" data-order-ren="${rn}">` +
-                `<td>${o.id}</td><td>${o.createdAt || '—'}</td><td>${o.name}</td>` +
-                `<td>${o.email}<br>${o.phone}</td><td>${o.date || '—'}</td><td>${rnBadge}</td><td>${items}</td>` +
-                `<td>` +
-                    `<button class="btn btn-sm btn-outline-danger btn-delete">Supprimer</button> ` +
-                    `<button class="btn btn-sm btn-outline-secondary btn-edit">Éditer</button>` +
-                `</td>` +
-            `</tr>`;
+            const dateCmd = o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR', { 
+                year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+            }) : '—';
+            
+            const dateRetrait = o.date ? new Date(o.date).toLocaleDateString('fr-FR', { 
+                weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' 
+            }) : '—';
+
+            html += `
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="order-card" data-order-id="${o.id}" data-order-date="${o.date || ''}" data-order-ren="${rn}">
+                        <div class="order-header">
+                            <h6 class="order-title">👤 ${o.name}</h6>
+                            <p class="order-date">📅 ${dateCmd}</p>
+                        </div>
+                        <div class="order-body">
+                            <div class="order-info">
+                                <div class="info-item">
+                                    <span class="info-label">📧 Contact</span>
+                                    <span class="info-value">${o.email}<br><small class="text-muted">${o.phone}</small></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">📍 Retrait</span>
+                                    <span class="info-value">${dateRetrait}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">🔄 Renouveler</span>
+                                    <span class="info-value">${rnBadge}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="items-section">
+                                <div class="items-title">🛒 Articles commandés</div>
+                                ${items}
+                            </div>
+                            
+                            <div class="order-actions">
+                                <button class="btn btn-sm btn-outline-secondary btn-edit">✏️ Éditer</button>
+                                <button class="btn btn-sm btn-outline-danger btn-delete">🗑️ Supprimer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
-        html += '</tbody></table>';
-        ordersTableContainer.innerHTML = html;
+
+        ordersContainer.innerHTML = `<div class="row g-3">${html}</div>`;
 
         // Attacher écouteurs aux boutons
-        ordersTableContainer.querySelectorAll('.btn-delete').forEach(btn => {
+        ordersContainer.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                const tr = e.target.closest('tr');
-                const orderId = tr && tr.getAttribute('data-order-id');
+                const card = e.target.closest('.order-card');
+                const orderId = card && card.getAttribute('data-order-id');
+                const clientName = card && card.querySelector('.order-title').textContent;
                 if (!orderId) return;
-                if (!confirm('Confirmer la suppression de la commande ' + orderId + ' ?')) return;
+                if (!confirm(`Confirmer la suppression de la commande de ${clientName} ?`)) return;
                 const token = localStorage.getItem('adminToken');
                 try {
                     const resp = await fetch('/api/delete-order', {
@@ -87,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const jr = await resp.json().catch(() => null);
                     if (resp.ok) {
                         showToast('✅ Succès', 'Commande supprimée', 'success');
-                        tr.remove();
+                        card.remove();
                     } else {
                         showToast('❌ Erreur', 'Suppression échouée: ' + (jr && jr.message ? jr.message : resp.statusText), 'error');
                     }
@@ -106,12 +170,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const editRen = document.getElementById('editRenouveler');
         const saveEditBtn = document.getElementById('saveEditBtn');
 
-        ordersTableContainer.querySelectorAll('.btn-edit').forEach(btn => {
+        ordersContainer.querySelectorAll('.btn-edit').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const tr = e.target.closest('tr');
-                const orderId = tr && tr.getAttribute('data-order-id');
-                const date = tr && tr.getAttribute('data-order-date');
-                const rn = tr && tr.getAttribute('data-order-ren');
+                const card = e.target.closest('.order-card');
+                const orderId = card && card.getAttribute('data-order-id');
+                const date = card && card.getAttribute('data-order-date');
+                const rn = card && card.getAttribute('data-order-ren');
                 if (!orderId || !modal) return;
                 editOrderId.value = orderId;
                 editDate.value = (date || '');
@@ -150,6 +214,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let currentOrders = [];
+    let currentSortBy = 'createdAt';
+
     async function fetchAdminOrders(token) {
         showMessage('Chargement...', 'muted');
         try {
@@ -162,8 +229,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            renderOrders(result.orders || []);
-            showMessage('Chargé: ' + (result.orders ? result.orders.length : 0) + ' commandes', 'success');
+            currentOrders = result.orders || [];
+            renderOrders(currentOrders, currentSortBy);
+            showMessage('Chargé: ' + currentOrders.length + ' commandes', 'success');
         } catch (err) {
             console.error('Erreur admin fetch:', err);
             showMessage('Erreur réseau. Réessayez.', 'danger');
@@ -198,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('adminToken');
         adminArea.classList.add('d-none');
         adminLogin.classList.remove('d-none');
-        ordersTableContainer.innerHTML = '';
+        ordersContainer.innerHTML = '';
         showMessage('Déconnecté');
     });
 });
