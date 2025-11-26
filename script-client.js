@@ -88,7 +88,7 @@ window.updateTotal = function() {
         basketInfo.classList.remove('error');
         basketInfo.classList.add('success');
     } else {
-        basketInfo.innerHTML = 'No product in your basket.';
+        basketInfo.innerHTML = 'Aucun produit dans votre panier.';
         basketInfo.classList.remove('success');
         basketInfo.classList.add('error');
     }
