@@ -158,9 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // Hasher le mot de passe avec bcryptjs
-            const passwordHash = await bcryptjs.hash(password, 10);
-
+            // Envoyer le mot de passe au serveur (qui le hashera avec bcryptjs côté serveur)
             const response = await fetch('/api/save-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -169,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     email,
                     phone,
                     address,
-                    passwordHash
+                    password // Le serveur hashera le mot de passe
                 })
             });
 

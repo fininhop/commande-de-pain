@@ -1,6 +1,7 @@
 // /api/save-user.js
 
 const admin = require('firebase-admin');
+const bcrypt = require('bcryptjs');
 
 if (!admin.apps.length) {
     try {
@@ -19,8 +20,8 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const { name, email, phone, address, passwordHash } = req.body;
-        if (!name || !email || !passwordHash) {
+        const { name, email, phone, address, password } = req.body;
+        if (!name || !email || !password) {
             return res.status(400).json({ message: 'Nom, email et mot de passe requis' });
         }
 
@@ -31,6 +32,9 @@ module.exports = async (req, res) => {
         if (!existing.empty) {
             return res.status(409).json({ message: 'Cet email est déjà enregistré' });
         }
+
+        // Hasher le mot de passe côté serveur
+        const passwordHash = await bcrypt.hash(password, 10);
 
         const userData = {
             name: name.trim(),
