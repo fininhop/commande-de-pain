@@ -43,45 +43,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const seasonsContainer = document.getElementById('seasonsContainer');
     const seasonFilter = document.getElementById('seasonFilter');
     const newSeasonBtn = document.getElementById('newSeasonBtn');
+    const seasonModalEl = document.getElementById('seasonModal');
+    const seasonModal = seasonModalEl ? new bootstrap.Modal(seasonModalEl) : null;
+    const saveSeasonBtn = document.getElementById('saveSeasonBtn');
+    const seasonForm = document.getElementById('seasonForm');
+    const seasonIdInput = document.getElementById('seasonId');
+    const seasonNameInput = document.getElementById('seasonName');
+    const seasonStartInput = document.getElementById('seasonStart');
+    const seasonEndInput = document.getElementById('seasonEnd');
+    const seasonDescInput = document.getElementById('seasonDescription');
 
     function showMessage(text, type='') {
         adminMessage.innerHTML = text ? `<div class="text-${type}">${text}</div>` : '';
     }
 
-    // Gestionnaire de tri (restauré)
-    if (sortSelect) {
-        sortSelect.addEventListener('change', () => {
-            currentSortBy = sortSelect.value;
-            if (currentOrders.length > 0) {
-                renderOrders(currentOrders, currentSortBy);
-            }
-        });
-    }
-
-    // Gestionnaire pour le bouton nouvelle saison
-    if (newSeasonBtn) {
-        newSeasonBtn.addEventListener('click', () => {
-            document.getElementById('seasonId').value = '';
-            document.getElementById('seasonName').value = '';
-            document.getElementById('seasonStart').value = '';
-            document.getElementById('seasonEnd').value = '';
-            document.getElementById('seasonDescription').value = '';
-            document.getElementById('seasonModalLabel').textContent = 'Nouvelle saison';
-            const modal = new bootstrap.Modal(document.getElementById('seasonModal'));
-            modal.show();
-        });
-    }
-
-    // Gestionnaire pour le filtre de saison
-    if (seasonFilter) {
-        seasonFilter.addEventListener('change', () => {
-            currentSeasonFilter = seasonFilter.value;
-            const token = localStorage.getItem('adminToken');
-            if (token) {
-                fetchAdminOrders(token);
-            }
-        });
-    }
+    // Gestionnaire de tri
+    sortSelect.addEventListener('change', () => {
+        currentSortBy = sortSelect.value;
+        if (currentOrders.length > 0) {
+            renderOrders(currentOrders, currentSortBy);
+        }
+    });
 
     function renderOrders(orders, sortBy = 'createdAt') {
         if (!orders || !orders.length) {
@@ -328,56 +310,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
         seasonsContainer.innerHTML = `<div class="row g-3">${html}</div>`;
 
-        // Attacher les écouteurs aux boutons de saison
+        // Boutons Edit/Supprimer pour chaque saison
         seasonsContainer.querySelectorAll('.btn-edit-season').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const card = e.target.closest('.season-card');
-                const seasonId = card && card.getAttribute('data-season-id');
-                const season = currentSeasons.find(s => s.id === seasonId);
-                if (!season) return;
-
-                document.getElementById('seasonId').value = season.id;
-                document.getElementById('seasonName').value = season.name || '';
-                document.getElementById('seasonStart').value = season.startDate ? new Date(season.startDate).toISOString().split('T')[0] : '';
-                document.getElementById('seasonEnd').value = season.endDate ? new Date(season.endDate).toISOString().split('T')[0] : '';
-                document.getElementById('seasonDescription').value = season.description || '';
-                document.getElementById('seasonModalLabel').textContent = 'Éditer la saison';
-
-                const modal = new bootstrap.Modal(document.getElementById('seasonModal'));
-                modal.show();
+                const id = card && card.getAttribute('data-season-id');
+                if (!id) return;
+                const s = currentSeasons.find(x => x.id === id);
+                if (!s || !seasonModal) return;
+                openSeasonModal(s);
             });
         });
 
         seasonsContainer.querySelectorAll('.btn-delete-season').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const card = e.target.closest('.season-card');
-                const seasonId = card && card.getAttribute('data-season-id');
-                const season = currentSeasons.find(s => s.id === seasonId);
-                if (!seasonId || !season) return;
-
-                if (!confirm(`Confirmer la suppression de la saison "${season.name}" ?`)) return;
-
+                const id = card && card.getAttribute('data-season-id');
+                if (!id) return;
+                if (!confirm('Supprimer cette saison ?')) return;
                 const token = localStorage.getItem('adminToken');
                 try {
-                    const response = await fetch('/api/seasons', {
+                    const resp = await fetch(`/api/seasons?seasonId=${encodeURIComponent(id)}` , {
                         method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-admin-token': token
-                        },
-                        body: JSON.stringify({ id: seasonId })
+                        headers: { 'x-admin-token': token }
                     });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
+                    const jr = await resp.json().catch(() => null);
+                    if (resp.ok) {
                         showToast('✅ Succès', 'Saison supprimée', 'success');
+                        // Retirer visuellement ou recharger
                         fetchSeasons(token);
                     } else {
-                        showToast('❌ Erreur', 'Suppression échouée: ' + (result.message || response.statusText), 'error');
+                        showToast('❌ Erreur', 'Suppression échouée: ' + (jr && jr.message ? jr.message : resp.statusText), 'error');
                     }
-                } catch (error) {
-                    console.error('Erreur suppression saison:', error);
+                } catch (err) {
+                    console.error('Erreur delete saison:', err);
                     showToast('❌ Erreur réseau', 'Impossible de supprimer la saison', 'error');
                 }
             });
@@ -406,11 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchAdminOrders(token) {
         showMessage('Chargement...', 'muted');
         try {
-            const url = currentSeasonFilter && currentSeasonFilter !== 'all' 
-                ? `/api/get-orders-admin?seasonId=${currentSeasonFilter}` 
-                : '/api/get-orders-admin';
-            
-            const response = await fetch(url, { headers: { 'x-admin-token': token } });
+            const response = await fetch('/api/get-orders-admin', { headers: { 'x-admin-token': token } });
             let result = null;
             try { result = await response.json(); } catch(e) { result = null; }
 
@@ -462,4 +424,69 @@ document.addEventListener('DOMContentLoaded', () => {
         ordersContainer.innerHTML = '';
         showMessage('Déconnecté');
     });
+
+    // Ouvrir le modal pour une nouvelle saison
+    if (newSeasonBtn && seasonModal) {
+        newSeasonBtn.addEventListener('click', () => {
+            openSeasonModal(null);
+        });
+    }
+
+    // Sauvegarder (créer/mettre à jour) une saison
+    if (saveSeasonBtn && seasonModal) {
+        saveSeasonBtn.addEventListener('click', async () => {
+            const token = localStorage.getItem('adminToken');
+            if (!token) { showToast('❌ Erreur', 'Token admin manquant', 'error'); return; }
+
+            const payload = {
+                name: (seasonNameInput.value || '').trim(),
+                startDate: (seasonStartInput.value || '').trim(),
+                endDate: (seasonEndInput.value || '').trim(),
+                description: (seasonDescInput.value || '').trim()
+            };
+
+            if (!payload.name || !payload.startDate || !payload.endDate) {
+                showToast('⚠️ Champs requis', 'Nom, début et fin sont requis', 'warning');
+                return;
+            }
+
+            const id = (seasonIdInput.value || '').trim();
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/api/seasons?seasonId=${encodeURIComponent(id)}` : '/api/seasons';
+
+            try {
+                const resp = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+                    body: JSON.stringify(payload)
+                });
+                const jr = await resp.json().catch(() => null);
+                if (resp.ok) {
+                    showToast('✅ Succès', id ? 'Saison mise à jour' : 'Saison créée', 'success');
+                    seasonModal.hide();
+                    fetchSeasons(token);
+                } else {
+                    showToast('❌ Erreur', (jr && jr.message) ? jr.message : 'Échec enregistrement saison', 'error');
+                }
+            } catch (err) {
+                console.error('Erreur save saison:', err);
+                showToast('❌ Erreur réseau', 'Impossible d’enregistrer la saison', 'error');
+            }
+        });
+    }
+
+    function openSeasonModal(season) {
+        if (!seasonModal) return;
+        // Reset form
+        if (seasonForm) seasonForm.reset();
+        seasonIdInput.value = season && season.id ? season.id : '';
+        seasonNameInput.value = season && season.name ? season.name : '';
+        seasonStartInput.value = season && season.startDate ? new Date(season.startDate).toISOString().slice(0,10) : '';
+        seasonEndInput.value = season && season.endDate ? new Date(season.endDate).toISOString().slice(0,10) : '';
+        seasonDescInput.value = season && season.description ? season.description : '';
+
+        const title = document.getElementById('seasonModalLabel');
+        if (title) title.textContent = season ? 'Éditer la saison' : 'Nouvelle saison';
+        seasonModal.show();
+    }
 });
