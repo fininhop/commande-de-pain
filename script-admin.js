@@ -1,4 +1,33 @@
 // script-admin.js - Interface d'administration simple (token-based)
+
+// Toast notification function
+function showToast(title, message, type = 'info') {
+    const toastEl = document.getElementById('liveToast');
+    if (!toastEl) return;
+    
+    const toastTitle = document.getElementById('toastTitle');
+    const toastBody = document.getElementById('toastBody');
+    const toastHeader = toastEl.querySelector('.toast-header');
+    
+    toastTitle.textContent = title;
+    toastBody.textContent = message;
+    
+    toastHeader.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info', 'text-white');
+    
+    if (type === 'success') {
+        toastHeader.classList.add('bg-success', 'text-white');
+    } else if (type === 'error' || type === 'danger') {
+        toastHeader.classList.add('bg-danger', 'text-white');
+    } else if (type === 'warning') {
+        toastHeader.classList.add('bg-warning');
+    } else {
+        toastHeader.classList.add('bg-info', 'text-white');
+    }
+    
+    const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+    toast.show();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const adminLogin = document.getElementById('adminLogin');
     const adminArea = document.getElementById('adminArea');
@@ -23,9 +52,15 @@ document.addEventListener('DOMContentLoaded', () => {
         orders.forEach(o => {
             const items = (o.items || []).map(it => `${it.quantity}× ${it.name}`).join('<br>');
             const rn = (o.renouveler || '').toString().trim().toLowerCase();
+            const rnBadge = rn === 'oui' 
+                ? '<span class="badge bg-success">Oui</span>' 
+                : rn === 'non' 
+                    ? '<span class="badge bg-secondary">Non</span>' 
+                    : '<span class="text-muted">—</span>';
+            
             html += `<tr class="order-row" data-order-id="${o.id}" data-order-date="${o.date || ''}" data-order-ren="${rn}">` +
                 `<td>${o.id}</td><td>${o.createdAt || '—'}</td><td>${o.name}</td>` +
-                `<td>${o.email}<br>${o.phone}</td><td>${o.date || '—'}</td><td>${rn || '—'}</td><td>${items}</td>` +
+                `<td>${o.email}<br>${o.phone}</td><td>${o.date || '—'}</td><td>${rnBadge}</td><td>${items}</td>` +
                 `<td>` +
                     `<button class="btn btn-sm btn-outline-danger btn-delete">Supprimer</button> ` +
                     `<button class="btn btn-sm btn-outline-secondary btn-edit">Éditer</button>` +
@@ -51,15 +86,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     const jr = await resp.json().catch(() => null);
                     if (resp.ok) {
-                        showMessage('Commande supprimée', 'success');
-                        // Retirer la ligne
+                        showToast('✅ Succès', 'Commande supprimée', 'success');
                         tr.remove();
                     } else {
-                        showMessage('Erreur suppression: ' + (jr && jr.message ? jr.message : resp.statusText), 'danger');
+                        showToast('❌ Erreur', 'Suppression échouée: ' + (jr && jr.message ? jr.message : resp.statusText), 'error');
                     }
                 } catch (err) {
                     console.error('Erreur delete:', err);
-                    showMessage('Erreur réseau lors de la suppression', 'danger');
+                    showToast('❌ Erreur réseau', 'Impossible de supprimer la commande', 'error');
                 }
             });
         });
@@ -102,15 +136,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     const jr = await resp.json().catch(() => null);
                     if (resp.ok) {
-                        showMessage('Commande mise à jour', 'success');
+                        showToast('✅ Succès', 'Commande mise à jour', 'success');
                         modal.hide();
                         fetchAdminOrders(token);
                     } else {
-                        showMessage('Erreur mise à jour: ' + (jr && jr.message ? jr.message : resp.statusText), 'danger');
+                        showToast('❌ Erreur', 'Mise à jour échouée: ' + (jr && jr.message ? jr.message : resp.statusText), 'error');
                     }
                 } catch (err) {
                     console.error('Erreur update:', err);
-                    showMessage('Erreur réseau lors de la mise à jour', 'danger');
+                    showToast('❌ Erreur réseau', 'Impossible de mettre à jour', 'error');
                 }
             };
         }

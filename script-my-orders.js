@@ -1,4 +1,33 @@
 // script-my-orders.js - Affiche les commandes du user connecté (lecture seule)
+
+// Toast notification function
+function showToast(title, message, type = 'info') {
+    const toastEl = document.getElementById('liveToast');
+    if (!toastEl) return;
+    
+    const toastTitle = document.getElementById('toastTitle');
+    const toastBody = document.getElementById('toastBody');
+    const toastHeader = toastEl.querySelector('.toast-header');
+    
+    toastTitle.textContent = title;
+    toastBody.textContent = message;
+    
+    toastHeader.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info', 'text-white');
+    
+    if (type === 'success') {
+        toastHeader.classList.add('bg-success', 'text-white');
+    } else if (type === 'error' || type === 'danger') {
+        toastHeader.classList.add('bg-danger', 'text-white');
+    } else if (type === 'warning') {
+        toastHeader.classList.add('bg-warning');
+    } else {
+        toastHeader.classList.add('bg-info', 'text-white');
+    }
+    
+    const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+    toast.show();
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const container = document.getElementById('ordersList');
     const logout = document.getElementById('logoutLink');
@@ -27,7 +56,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         try { result = await response.json(); } catch (e) { result = null; }
 
         if (!response.ok) {
-            container.innerHTML = '<div class="alert alert-danger">Erreur lors de la récupération des commandes: ' + (result && result.message ? result.message : response.statusText) + '</div>';
+            showToast('❌ Erreur', 'Erreur lors de la récupération: ' + (result && result.message ? result.message : response.statusText), 'error');
+            container.innerHTML = '<div class="alert alert-warning">Impossible de charger les commandes.</div>';
             return;
         }
 
@@ -73,6 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
         console.error('Erreur récupération commandes:', err);
-        container.innerHTML = '<div class="alert alert-danger">Erreur réseau. Réessayez plus tard.</div>';
+        showToast('❌ Erreur réseau', 'Impossible de charger les commandes.', 'error');
+        container.innerHTML = '<div class="alert alert-warning">Erreur réseau. Réessayez plus tard.</div>';
     }
 });
