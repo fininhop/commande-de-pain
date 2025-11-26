@@ -69,9 +69,11 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="orderDate" name="date_livraison" required class="form-control">
-                    <small class="text-muted fst-italic">Sélectionnez la date de livraison (lundi 18h-19h mairie de Belis)</small>
+                    <label for="seasonSelect">Saison de commande</label>
+                    <select id="seasonSelect" name="season" required class="form-control">
+                        <option value="">Sélectionnez une saison...</option>
+                    </select>
+                    <small class="text-muted fst-italic">Choisissez la saison pour laquelle vous souhaitez commander</small>
                 </div>
                 <div class="form-group">
                     <label>Renouveler ma commande dans 15 jours</label>

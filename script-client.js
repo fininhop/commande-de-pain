@@ -49,6 +49,55 @@ const PRICES = {
     'sarrazin': 7.00
 };
 
+// Variables globales pour les saisons
+let availableSeasons = [];
+
+// Fonction pour charger les saisons disponibles
+async function loadSeasons() {
+    try {
+        const response = await fetch('/api/seasons');
+        const result = await response.json();
+
+        if (response.ok && result.seasons) {
+            availableSeasons = result.seasons;
+            populateSeasonSelect();
+        } else {
+            console.error('Erreur chargement saisons:', result.message);
+            showToast('Erreur', 'Impossible de charger les saisons disponibles.', 'error');
+        }
+    } catch (error) {
+        console.error('Erreur réseau saisons:', error);
+        showToast('Erreur réseau', 'Impossible de charger les saisons.', 'error');
+    }
+}
+
+// Fonction pour remplir le sélecteur de saisons
+function populateSeasonSelect() {
+    const seasonSelect = document.getElementById('seasonSelect');
+    if (!seasonSelect) return;
+
+    // Garder seulement l'option par défaut
+    seasonSelect.innerHTML = '<option value="">Sélectionnez une saison...</option>';
+
+    // Ajouter les saisons actives
+    const now = new Date();
+    availableSeasons.forEach(season => {
+        const startDate = new Date(season.startDate);
+        const endDate = new Date(season.endDate);
+        const isActive = now >= startDate && now <= endDate;
+
+        const option = document.createElement('option');
+        option.value = season.id;
+        option.textContent = `${season.name} (${startDate.toLocaleDateString('fr-FR')} - ${endDate.toLocaleDateString('fr-FR')})`;
+        if (isActive) {
+            option.textContent += ' - ACTIVE';
+            option.selected = true; // Sélectionner automatiquement la saison active
+        }
+
+        seasonSelect.appendChild(option);
+    });
+}
+
 const PRODUCT_NAMES = {
     'blanc_400g': 'Blanc 400g', 'blanc_800g': 'Blanc 800g', 'blanc_1kg': 'Blanc 1kg',
     'complet_400g': 'Complet 400g', 'complet_800g': 'Complet 800g', 'complet_1kg': 'Complet 1kg',
@@ -181,6 +230,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Charger les saisons disponibles
+    loadSeasons();
+
     const form = document.getElementById('clientOrderForm');
     const statusMessage = document.getElementById('statusMessage');
 
@@ -264,11 +316,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 2. Création de l'objet de commande pour l'API
+        const selectedSeasonId = document.getElementById('seasonSelect').value;
+        const selectedSeason = availableSeasons.find(s => s.id === selectedSeasonId);
+
+        if (!selectedSeason) {
+            showToast('Saison requise', 'Veuillez sélectionner une saison de commande.', 'warning');
+            return;
+        }
+
         const orderData = {
             name: currentUser.name,
             email: currentUser.email,
             phone: currentUser.phone,
-            date: document.getElementById('orderDate').value,
+            seasonId: selectedSeason.id,
+            seasonName: selectedSeason.name,
+            date: selectedSeason.endDate, // Utiliser la date de fin de saison comme date de livraison
             renouveler: document.querySelector('input[name="renouveler"]:checked').value, // Renouvellement
             items: items,
             userId: currentUser.userId || currentUser.id || null

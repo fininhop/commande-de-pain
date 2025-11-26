@@ -28,6 +28,17 @@ function showError(inputId, errorId, message) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Vérifier si l'utilisateur est déjà connecté
+    const stored = localStorage.getItem('currentUser');
+    let currentUser = null;
+    try { currentUser = stored ? JSON.parse(stored) : null; } catch (e) { currentUser = null; }
+    
+    if (currentUser) {
+        // Rediriger vers la page de commandes si déjà connecté
+        window.location.href = 'order.html';
+        return;
+    }
+
     const form = document.getElementById('loginForm');
     const msg = document.getElementById('loginMessage');
     const emailInput = document.getElementById('loginEmail');

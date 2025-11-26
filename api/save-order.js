@@ -25,10 +25,10 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const { name, email, phone, date, renouveler, items, userId } = req.body;
+        const { name, email, phone, date, seasonId, seasonName, renouveler, items, userId } = req.body;
         
         // Vérification minimale des données
-        if (!name || !email || !date || !items || items.length === 0) {
+        if (!name || !email || (!date && !seasonId) || !items || items.length === 0) {
             return res.status(400).json({ message: 'Données de commande incomplètes.' });
         }
 
@@ -42,6 +42,8 @@ module.exports = async (req, res) => {
             email: (email || '').toString().trim().toLowerCase(),
             phone: (phone || '').toString().trim(),
             date: (date || '').toString().trim(), // Date de retrait/livraison souhaitée
+            seasonId: seasonId || null, // ID de la saison
+            seasonName: seasonName || null, // Nom de la saison
             renouveler: normRenouveler === 'oui' ? 'oui' : 'non',
             items: items.map(item => ({
                 name: item.name,

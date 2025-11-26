@@ -42,6 +42,8 @@ module.exports = async (req, res) => {
                 email: data.email || 'N/A',
                 phone: data.phone || 'N/A',
                 date: data.date,
+                seasonId: data.seasonId || null,
+                seasonName: data.seasonName || null,
                 renouveler: rn === 'oui' ? 'oui' : (rn === 'non' ? 'non' : 'non'),
                 items: data.items,
                 createdAt

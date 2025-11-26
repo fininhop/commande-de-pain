@@ -43,6 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const seasonsContainer = document.getElementById('seasonsContainer');
     const seasonFilter = document.getElementById('seasonFilter');
     const newSeasonBtn = document.getElementById('newSeasonBtn');
+    const seasonModal = document.getElementById('seasonModal');
+    const seasonForm = document.getElementById('seasonForm');
+    const seasonIdInput = document.getElementById('seasonId');
+    const seasonNameInput = document.getElementById('seasonName');
+    const seasonStartInput = document.getElementById('seasonStart');
+    const seasonEndInput = document.getElementById('seasonEnd');
+    const seasonDescInput = document.getElementById('seasonDescription');
+    const saveSeasonBtn = document.getElementById('saveSeasonBtn');
 
     function showMessage(text, type='') {
         adminMessage.innerHTML = text ? `<div class="text-${type}">${text}</div>` : '';
@@ -62,8 +70,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Filtrer par saison si nécessaire
+        let filteredOrders = orders;
+        if (currentSeasonFilter && currentSeasonFilter !== 'all') {
+            filteredOrders = orders.filter(order => order.seasonId === currentSeasonFilter);
+        }
+
+        if (!filteredOrders.length) {
+            ordersContainer.innerHTML = '<div class="alert alert-info text-center py-5"><h5>📭 Aucune commande pour cette saison</h5><p class="mb-0">Aucune commande trouvée pour la saison sélectionnée.</p></div>';
+            return;
+        }
+
         // Trier les commandes
-        const sortedOrders = [...orders].sort((a, b) => {
+        const sortedOrders = [...filteredOrders].sort((a, b) => {
             let aVal, bVal;
             switch (sortBy) {
                 case 'createdAt':
@@ -105,13 +124,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
             }) : '—';
             
+            const saisonInfo = o.seasonName ? `<div class="info-item">
+                <span class="info-label">🌸 Saison</span>
+                <span class="info-value">${o.seasonName}</span>
+            </div>` : '';
+            
             const dateRetrait = o.date ? new Date(o.date).toLocaleDateString('fr-FR', { 
                 weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' 
             }) : '—';
 
             html += `
                 <div class="col-12 col-md-6 col-lg-4">
-                    <div class="order-card" data-order-id="${o.id}" data-order-date="${o.date || ''}" data-order-ren="${rn}">
+                    <div class="order-card" data-order-id="${o.id}" data-order-date="${o.date || ''}" data-order-ren="${rn}" data-order-season="${o.seasonId || ''}">
                         <div class="order-header">
                             <h6 class="order-title">👤 ${o.name}</h6>
                             <p class="order-date">📅 ${dateCmd}</p>
@@ -126,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span class="info-label">📍 Retrait</span>
                                     <span class="info-value">${dateRetrait}</span>
                                 </div>
+                                ${saisonInfo}
                                 <div class="info-item">
                                     <span class="info-label">🔄 Renouveler</span>
                                     <span class="info-value">${rnBadge}</span>
@@ -148,6 +173,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         ordersContainer.innerHTML = `<div class="row g-3">${html}</div>`;
+
+        // Mettre à jour les statistiques de saison
+        updateSeasonStats(filteredOrders);
 
         // Attacher écouteurs aux boutons
         ordersContainer.querySelectorAll('.btn-delete').forEach(btn => {
@@ -300,6 +328,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         seasonsContainer.innerHTML = `<div class="row g-3">${html}</div>`;
+
+        // Attacher les écouteurs d'événements
+        attachSeasonEventListeners();
     }
 
     function isSeasonActive(season) {
@@ -321,6 +352,220 @@ document.addEventListener('DOMContentLoaded', () => {
         seasonFilter.innerHTML = options;
     }
 
+    function attachSeasonEventListeners() {
+        // Boutons de suppression
+        seasonsContainer.querySelectorAll('.btn-delete-season').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const card = e.target.closest('.season-card');
+                const seasonId = card && card.getAttribute('data-season-id');
+                const seasonName = card && card.querySelector('.season-title').textContent;
+
+                if (!seasonId) return;
+                if (!confirm(`Confirmer la suppression de la saison "${seasonName}" ?`)) return;
+
+                const token = localStorage.getItem('adminToken');
+                try {
+                    const response = await fetch(`/api/seasons?seasonId=${seasonId}`, {
+                        method: 'DELETE',
+                        headers: { 'x-admin-token': token }
+                    });
+
+                    const result = await response.json();
+                    if (response.ok) {
+                        showToast('✅ Succès', 'Saison supprimée', 'success');
+                        card.remove();
+                        await fetchSeasons(token);
+                    } else {
+                        showToast('❌ Erreur', 'Suppression échouée: ' + result.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Erreur suppression saison:', error);
+                    showToast('❌ Erreur réseau', 'Impossible de supprimer la saison', 'error');
+                }
+            });
+        });
+
+        // Boutons d'édition
+        seasonsContainer.querySelectorAll('.btn-edit-season').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const card = e.target.closest('.season-card');
+                const seasonId = card && card.getAttribute('data-season-id');
+
+                if (!seasonId) return;
+
+                const season = currentSeasons.find(s => s.id === seasonId);
+                if (!season) return;
+
+                openSeasonModal(season);
+            });
+        });
+    }
+
+    function updateSeasonStats(orders) {
+        const seasonStats = document.getElementById('seasonStats');
+        const seasonOrderCount = document.getElementById('seasonOrderCount');
+        const seasonTotalPrice = document.getElementById('seasonTotalPrice');
+        const seasonAveragePrice = document.getElementById('seasonAveragePrice');
+
+        if (!seasonStats || !orders || !orders.length) {
+            if (seasonStats) seasonStats.style.display = 'none';
+            return;
+        }
+
+        // Filtrer par saison si nécessaire
+        let filteredOrders = orders;
+        if (currentSeasonFilter && currentSeasonFilter !== 'all') {
+            filteredOrders = orders.filter(order => order.seasonId === currentSeasonFilter);
+        }
+
+        const orderCount = filteredOrders.length;
+        let totalPrice = 0;
+
+        filteredOrders.forEach(order => {
+            if (order.items && order.items.length) {
+                order.items.forEach(item => {
+                    // Utiliser les prix du script client pour le calcul
+                    const price = getItemPrice(item.name);
+                    if (price && item.quantity) {
+                        totalPrice += price * item.quantity;
+                    }
+                });
+            }
+        });
+
+        const averagePrice = orderCount > 0 ? totalPrice / orderCount : 0;
+
+        if (seasonOrderCount) seasonOrderCount.textContent = orderCount;
+        if (seasonTotalPrice) seasonTotalPrice.textContent = `€${totalPrice.toFixed(2)}`;
+        if (seasonAveragePrice) seasonAveragePrice.textContent = `€${averagePrice.toFixed(2)}`;
+
+        if (seasonStats) seasonStats.style.display = orderCount > 0 ? 'block' : 'none';
+    }
+
+    // Fonction helper pour obtenir le prix d'un article
+    function getItemPrice(itemName) {
+        const priceMap = {
+            'Pain blanc 400g': 3.60, 'Pain blanc 800g': 6.50, 'Pain blanc 1kg': 7.00,
+            'Pain complet 400g': 3.60, 'Pain complet 800g': 6.50, 'Pain complet 1kg': 7.00,
+            'Pain céréales 400g': 4.60, 'Pain céréales 800g': 8.50, 'Pain céréales 1kg': 9.00,
+            'Pain épeautre 400g': 4.60, 'Pain épeautre 800g': 8.50, 'Pain épeautre 1kg': 9.00,
+            'Sarrazin': 7.00
+        };
+        return priceMap[itemName] || 0;
+    }
+        // Boutons de suppression
+        seasonsContainer.querySelectorAll('.btn-delete-season').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const card = e.target.closest('.season-card');
+                const seasonId = card && card.getAttribute('data-season-id');
+                const seasonName = card && card.querySelector('.season-title').textContent;
+
+                if (!seasonId) return;
+                if (!confirm(`Confirmer la suppression de la saison "${seasonName}" ?`)) return;
+
+                const token = localStorage.getItem('adminToken');
+                try {
+                    const response = await fetch(`/api/seasons?seasonId=${seasonId}`, {
+                        method: 'DELETE',
+                        headers: { 'x-admin-token': token }
+                    });
+
+                    const result = await response.json();
+                    if (response.ok) {
+                        showToast('✅ Succès', 'Saison supprimée', 'success');
+                        card.remove();
+                        await fetchSeasons(token);
+                    } else {
+                        showToast('❌ Erreur', 'Suppression échouée: ' + result.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Erreur suppression saison:', error);
+                    showToast('❌ Erreur réseau', 'Impossible de supprimer la saison', 'error');
+                }
+            });
+        });
+
+        // Boutons d'édition
+        seasonsContainer.querySelectorAll('.btn-edit-season').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const card = e.target.closest('.season-card');
+                const seasonId = card && card.getAttribute('data-season-id');
+
+                if (!seasonId) return;
+
+                const season = currentSeasons.find(s => s.id === seasonId);
+                if (!season) return;
+
+                openSeasonModal(season);
+            });
+        });
+    }
+
+    function openSeasonModal(season = null) {
+        if (!seasonModal || !seasonForm) return;
+
+        const modal = new bootstrap.Modal(seasonModal);
+
+        if (season) {
+            seasonIdInput.value = season.id;
+            seasonNameInput.value = season.name || '';
+            seasonStartInput.value = season.startDate ? new Date(season.startDate).toISOString().split('T')[0] : '';
+            seasonEndInput.value = season.endDate ? new Date(season.endDate).toISOString().split('T')[0] : '';
+            seasonDescInput.value = season.description || '';
+            document.getElementById('seasonModalLabel').textContent = 'Éditer la saison';
+        } else {
+            seasonIdInput.value = '';
+            seasonNameInput.value = '';
+            seasonStartInput.value = '';
+            seasonEndInput.value = '';
+            seasonDescInput.value = '';
+            document.getElementById('seasonModalLabel').textContent = 'Nouvelle saison';
+        }
+
+        modal.show();
+    }
+
+    async function saveSeason() {
+        const seasonId = seasonIdInput.value;
+        const name = seasonNameInput.value.trim();
+        const startDate = seasonStartInput.value;
+        const endDate = seasonEndInput.value;
+        const description = seasonDescInput.value.trim();
+
+        if (!name || !startDate || !endDate) {
+            showToast('❌ Erreur', 'Nom, date de début et date de fin requis', 'error');
+            return;
+        }
+
+        const seasonData = { name, startDate, endDate, description };
+        const token = localStorage.getItem('adminToken');
+        const method = seasonId ? 'PUT' : 'POST';
+        const url = seasonId ? `/api/seasons?seasonId=${seasonId}` : '/api/seasons';
+
+        try {
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-token': token
+                },
+                body: JSON.stringify(seasonData)
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                showToast('✅ Succès', `Saison ${seasonId ? 'mise à jour' : 'créée'}`, 'success');
+                bootstrap.Modal.getInstance(seasonModal).hide();
+                await fetchSeasons(token);
+            } else {
+                showToast('❌ Erreur', `Échec: ${result.message}`, 'error');
+            }
+        } catch (error) {
+            console.error('Erreur sauvegarde saison:', error);
+            showToast('❌ Erreur réseau', 'Impossible de sauvegarder la saison', 'error');
+        }
+    }
+
     async function fetchAdminOrders(token) {
         showMessage('Chargement...', 'muted');
         try {
@@ -335,6 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             currentOrders = result.orders || [];
             renderOrders(currentOrders, currentSortBy);
+            updateSeasonStats(currentOrders);
             showMessage('Chargé: ' + currentOrders.length + ' commandes', 'success');
         } catch (err) {
             console.error('Erreur admin fetch:', err);
@@ -374,6 +620,24 @@ document.addEventListener('DOMContentLoaded', () => {
         adminArea.classList.add('d-none');
         adminLogin.classList.remove('d-none');
         ordersContainer.innerHTML = '';
+        if (seasonsContainer) seasonsContainer.innerHTML = '';
         showMessage('Déconnecté');
     });
-});
+
+    // Écouteurs pour la gestion des saisons
+    if (newSeasonBtn) {
+        newSeasonBtn.addEventListener('click', () => openSeasonModal());
+    }
+
+    if (saveSeasonBtn) {
+        saveSeasonBtn.addEventListener('click', saveSeason);
+    }
+
+    if (seasonFilter) {
+        seasonFilter.addEventListener('change', () => {
+            currentSeasonFilter = seasonFilter.value;
+            if (currentOrders.length > 0) {
+                renderOrders(currentOrders, currentSortBy);
+            }
+        });
+    }
