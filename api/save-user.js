@@ -24,11 +24,6 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // Debug shortcut: return received body when header x-debug-save-user is set
-        if (req.headers && req.headers['x-debug-save-user'] === '1') {
-            return res.status(200).json({ ok: true, received: req.body });
-        }
-
         // Vérifier l'initialisation Admin SDK
         if (global.adminInitError) {
             return res.status(500).json({ message: 'Erreur de configuration serveur (Firebase non initialisé)', error: global.adminInitError.message });

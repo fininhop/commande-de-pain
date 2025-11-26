@@ -172,7 +172,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(orderData),
             });
 
-            const result = await response.json();
+            let result = null;
+            try {
+                result = await response.json();
+            } catch (parseErr) {
+                const text = await response.text().catch(() => '');
+                try { result = JSON.parse(text); } catch { result = { message: text || 'Réponse serveur invalide' }; }
+            }
 
             if (response.ok) {
                 statusMessage.textContent = `Commande enregistrée avec succès ! ID: ${result.orderId}`;
@@ -180,7 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 form.reset();
                 updateTotal(); // Réinitialise l'affichage du total
             } else {
-                statusMessage.textContent = `Erreur lors de l'enregistrement: ${result.message || 'Erreur inconnue'}`;
+                if (response.status >= 500) {
+                    statusMessage.textContent = 'Erreur serveur. Réessayez plus tard.';
+                } else {
+                    statusMessage.textContent = `Erreur lors de l'enregistrement: ${result && result.message ? result.message : 'Erreur inconnue'}`;
+                }
                 statusMessage.className = 'status-message error';
             }
 

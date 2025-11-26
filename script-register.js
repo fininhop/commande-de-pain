@@ -171,7 +171,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            const result = await response.json();
+            let result = null;
+            try {
+                result = await response.json();
+            } catch (parseErr) {
+                const text = await response.text().catch(() => '');
+                try { result = JSON.parse(text); } catch { result = { message: text || 'Réponse serveur invalide' }; }
+            }
+
             if (response.ok) {
                 const userId = result.userId;
                 // Stocker l'utilisateur connecté
@@ -185,7 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 msg.innerHTML = '<div class="alert alert-success">Compte créé ! Redirection…</div>';
                 setTimeout(() => { window.location.href = 'index.html'; }, 900);
             } else {
-                msg.innerHTML = '<div class="alert alert-danger">Erreur: ' + (result.message || 'Erreur inconnue') + '</div>';
+                if (response.status >= 500) {
+                    msg.innerHTML = '<div class="alert alert-danger">Erreur serveur, réessayez plus tard.</div>';
+                } else {
+                    msg.innerHTML = '<div class="alert alert-danger">Erreur: ' + (result && result.message ? result.message : 'Erreur inconnue') + '</div>';
+                }
             }
 
         } catch (err) {
