@@ -38,6 +38,15 @@ module.exports = async (req, res) => {
         const forbidden = ['userId'];
         forbidden.forEach(f => delete updates[f]);
 
+        // Normaliser 'renouveler' si fourni
+        if (typeof updates.renouveler !== 'undefined') {
+            const r = (updates.renouveler || '').toString().trim().toLowerCase();
+            updates.renouveler = r === 'oui' ? 'oui' : (r === 'non' ? 'non' : 'non');
+        }
+        if (typeof updates.date !== 'undefined') {
+            updates.date = (updates.date || '').toString().trim();
+        }
+
         await global.db.collection('orders').doc(orderId).update(updates);
 
         res.status(200).json({ message: 'Commande mise à jour', orderId, updates });

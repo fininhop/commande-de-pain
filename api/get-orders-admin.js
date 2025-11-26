@@ -35,13 +35,14 @@ module.exports = async (req, res) => {
             const data = doc.data();
             const timeField = data.timestamp || data.createdAt;
             const createdAt = timeField ? (timeField.toDate ? timeField.toDate().toISOString() : new Date(timeField).toISOString()) : null;
+            const rn = (data.renouveler == null ? '' : String(data.renouveler)).trim().toLowerCase();
             return {
                 id: doc.id,
                 name: data.name || 'N/A',
                 email: data.email || 'N/A',
                 phone: data.phone || 'N/A',
                 date: data.date,
-                renouveler: data.renouveler,
+                renouveler: rn === 'oui' ? 'oui' : (rn === 'non' ? 'non' : 'non'),
                 items: data.items,
                 createdAt
             };

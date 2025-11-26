@@ -19,12 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         let html = '<table class="table table-sm table-striped">';
-        html += '<thead><tr><th>Id</th><th>Date Cmd</th><th>Nom</th><th>Contact</th><th>Retrait</th><th>Articles</th><th>Actions</th></tr></thead><tbody>';
+        html += '<thead><tr><th>Id</th><th>Date Cmd</th><th>Nom</th><th>Contact</th><th>Retrait</th><th>Renouveler</th><th>Articles</th><th>Actions</th></tr></thead><tbody>';
         orders.forEach(o => {
             const items = (o.items || []).map(it => `${it.quantity}× ${it.name}`).join('<br>');
-            html += `<tr class="order-row" data-order-id="${o.id}">` +
+            const rn = (o.renouveler || '').toString().trim().toLowerCase();
+            html += `<tr class="order-row" data-order-id="${o.id}" data-order-date="${o.date || ''}" data-order-ren="${rn}">` +
                 `<td>${o.id}</td><td>${o.createdAt || '—'}</td><td>${o.name}</td>` +
-                `<td>${o.email}<br>${o.phone}</td><td>${o.date || '—'}</td><td>${items}</td>` +
+                `<td>${o.email}<br>${o.phone}</td><td>${o.date || '—'}</td><td>${rn || '—'}</td><td>${items}</td>` +
                 `<td>` +
                     `<button class="btn btn-sm btn-outline-danger btn-delete">Supprimer</button> ` +
                     `<button class="btn btn-sm btn-outline-secondary btn-edit">Éditer</button>` +
@@ -63,18 +64,35 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        // Modal-based edit
+        const modalEl = document.getElementById('editModal');
+        const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+        const editOrderId = document.getElementById('editOrderId');
+        const editDate = document.getElementById('editDate');
+        const editRen = document.getElementById('editRenouveler');
+        const saveEditBtn = document.getElementById('saveEditBtn');
+
         ordersTableContainer.querySelectorAll('.btn-edit').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
+            btn.addEventListener('click', (e) => {
                 const tr = e.target.closest('tr');
                 const orderId = tr && tr.getAttribute('data-order-id');
-                if (!orderId) return;
-                // Simple prompt-based edit: modifier date et renouveler
-                const newDate = prompt('Nouvelle date de retrait (YYYY-MM-DD) — laisser vide pour ne pas changer:');
-                const newRen = prompt('Renouveler ? (oui/non) — laisser vide pour ne pas changer:');
+                const date = tr && tr.getAttribute('data-order-date');
+                const rn = tr && tr.getAttribute('data-order-ren');
+                if (!orderId || !modal) return;
+                editOrderId.value = orderId;
+                editDate.value = (date || '');
+                editRen.value = (rn === 'oui' || rn === 'non') ? rn : '';
+                modal.show();
+            });
+        });
+
+        if (saveEditBtn && modal) {
+            saveEditBtn.onclick = async () => {
+                const orderId = editOrderId.value;
                 const updates = {};
-                if (newDate) updates.date = newDate;
-                if (newRen) updates.renouveler = newRen;
-                if (Object.keys(updates).length === 0) return;
+                if (editDate.value) updates.date = editDate.value;
+                if (editRen.value) updates.renouveler = editRen.value;
+                if (!orderId || Object.keys(updates).length === 0) { modal.hide(); return; }
                 const token = localStorage.getItem('adminToken');
                 try {
                     const resp = await fetch('/api/update-order', {
@@ -85,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const jr = await resp.json().catch(() => null);
                     if (resp.ok) {
                         showMessage('Commande mise à jour', 'success');
-                        // Rafraîchir la liste pour afficher changements
+                        modal.hide();
                         fetchAdminOrders(token);
                     } else {
                         showMessage('Erreur mise à jour: ' + (jr && jr.message ? jr.message : resp.statusText), 'danger');
@@ -94,8 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Erreur update:', err);
                     showMessage('Erreur réseau lors de la mise à jour', 'danger');
                 }
-            });
-        });
+            };
+        }
     }
 
     async function fetchAdminOrders(token) {

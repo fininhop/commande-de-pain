@@ -32,12 +32,17 @@ module.exports = async (req, res) => {
             return res.status(400).json({ message: 'Données de commande incomplètes.' });
         }
 
+        // Normaliser certains champs
+        const normRenouveler = typeof renouveler === 'string'
+            ? renouveler.toString().trim().toLowerCase()
+            : (renouveler === true ? 'oui' : (renouveler === false ? 'non' : 'non'));
+
         const orderData = {
-            name,
-            email,
-            phone,
-            date: date, // Date de retrait/livraison souhaitée
-            renouveler: renouveler,
+            name: (name || '').toString().trim(),
+            email: (email || '').toString().trim().toLowerCase(),
+            phone: (phone || '').toString().trim(),
+            date: (date || '').toString().trim(), // Date de retrait/livraison souhaitée
+            renouveler: normRenouveler === 'oui' ? 'oui' : 'non',
             items: items.map(item => ({
                 name: item.name,
                 quantity: item.quantity
