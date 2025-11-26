@@ -29,8 +29,19 @@ function showToast(title, message, type = 'info') {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const sortSelect = document.getElementById('sortSelect');
+    const adminLogin = document.getElementById('adminLogin');
+    const adminArea = document.getElementById('adminArea');
+    const adminForm = document.getElementById('adminLoginForm');
+    const tokenInput = document.getElementById('adminTokenInput');
+    const refreshBtn = document.getElementById('refreshBtn');
     const ordersContainer = document.getElementById('ordersContainer');
+    const adminMessage = document.getElementById('adminMessage');
+    const logoutAdmin = document.getElementById('logoutAdmin');
+    const sortSelect = document.getElementById('sortSelect');
+
+    function showMessage(text, type='') {
+        adminMessage.innerHTML = text ? `<div class="text-${type}">${text}</div>` : '';
+    }
 
     // Gestionnaire de tri
     sortSelect.addEventListener('change', () => {
