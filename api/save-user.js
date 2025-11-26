@@ -19,9 +19,9 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const { name, email, phone, address } = req.body;
-        if (!name || !email) {
-            return res.status(400).json({ message: 'Nom et email requis' });
+        const { name, email, phone, address, passwordHash } = req.body;
+        if (!name || !email || !passwordHash) {
+            return res.status(400).json({ message: 'Nom, email et mot de passe requis' });
         }
 
         const normalizedEmail = String(email).trim().toLowerCase();
@@ -29,8 +29,7 @@ module.exports = async (req, res) => {
         // Recherche si l'email existe déjà
         const existing = await db.collection('users').where('email', '==', normalizedEmail).limit(1).get();
         if (!existing.empty) {
-            const doc = existing.docs[0];
-            return res.status(200).json({ message: 'Utilisateur existant', userId: doc.id, user: doc.data() });
+            return res.status(409).json({ message: 'Cet email est déjà enregistré' });
         }
 
         const userData = {
@@ -38,6 +37,7 @@ module.exports = async (req, res) => {
             email: normalizedEmail,
             phone: phone ? String(phone).trim() : '',
             address: address ? String(address).trim() : '',
+            passwordHash: passwordHash, // Stocker le hash du mot de passe
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         };
 
