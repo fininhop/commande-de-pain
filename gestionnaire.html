@@ -3,152 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestionnaire de Commandes Pain Bio</title>
+    <title>Administration - Gestionnaire de Commandes</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='8' fill='%23f5d28f'/%3E%3Ctext x='50%25' y='56%25' font-size='28' text-anchor='middle' fill='%236b3f0a' font-family='Arial,Helvetica,sans-serif'%3E%F0%9F%8C%9E%3C/text%3E%3C/svg%3E">
-    <!-- Preload Bootstrap CDN early to reduce layout shifts -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="style" onload="this.rel='stylesheet'">
     <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"></noscript>
-    <!-- Local minimal fallback for Bootstrap (keeps basic styles if CDN delayed) -->
     <link href="assets/bootstrap-fallback.css" rel="stylesheet">
     <style>
-        /* Minimal local tweaks when needed */
-        .items-list { list-style: none; padding: 0; margin: 0; }
-        .items-list li { margin-bottom: 4px; }
-        /* Prefer Bootstrap `d-none` utility for visibility control */
-        .modal-custom .modal-content { max-width: 520px; }
-        /* modal-custom overlay styles (avoid Bootstrap .modal conflicts) */
-        .modal-custom {
-            position: fixed;
-            z-index: 1200;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.45);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-        }
-        .modal-custom .modal-content { box-shadow: 0 6px 24px rgba(0,0,0,0.25); }
-
-        /* Styles spécifiques pour le tableau du gestionnaire */
-        /* Réduire légèrement la police et compacter les cellules (paddings ≈ moitié) */
-        #ordersTableContainer .table {
-            font-size: 0.85rem; /* réduire la police pour compactage optimal */
-            margin-bottom: 0;
-        }
-        #ordersTableContainer .table th,
-        #ordersTableContainer .table td {
-            padding: 0.3rem 0.4rem; /* diminuer les paddings à environ la moitié */
-            vertical-align: middle;
-            line-height: 1.4;
-        }
-
-        /* Ajuster les en-têtes du tableau */
-        #ordersTableContainer .table thead th {
-            font-size: 0.8rem;
-            font-weight: 600;
-            background-color: #e7f3ff;
-        }
-
-        /* Ajuster la barre d'actions en masse pour qu'elle prenne moins de place */
-        .bulk-actions-bar { font-size: 0.9rem; }
-        .bulk-actions-bar .container { padding-top: 0.25rem; padding-bottom: 0.25rem; }
-        .bulk-actions-bar .btn { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
-
-        /* Version mobile: cartes plus compactes */
-        #ordersCardsContainer .card { margin-bottom: 0.5rem; font-size: 0.9rem; }
-        #ordersCardsContainer .card-body { padding: 0.6rem; }
-        #ordersCardsContainer .card-title { font-size: 0.95rem; margin-bottom: 0.4rem; }
+        body { background: #f8f9fa; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+        .admin-login-card { max-width: 450px; margin: 80px auto; }
+        .table th { cursor: pointer; user-select: none; position: relative; }
+        .table th.sortable:hover { background-color: #cfe2ff; }
+        .table th.sorted-asc::after { content: ' ▲'; font-size: 0.7em; }
+        .table th.sorted-desc::after { content: ' ▼'; font-size: 0.7em; }
+        .order-row { transition: background-color 0.2s; }
+        .order-row:hover { background-color: #f8f9fa !important; }
+        #ordersTableContainer .table { font-size: 0.85rem; margin-bottom: 0; }
+        #ordersTableContainer .table th, #ordersTableContainer .table td { padding: 0.5rem 0.6rem; vertical-align: middle; }
+        #ordersTableContainer .table thead th { font-size: 0.85rem; font-weight: 600; background-color: #e7f3ff; }
+        .badge { font-size: 0.8rem; }
     </style>
 </head>
 <body>
-    <div class="container py-4">
-        <div class="card shadow-sm">
+    <!-- Écran de connexion admin -->
+    <div id="adminLoginScreen" class="container">
+        <div class="card admin-login-card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">🔐 Accès Administrateur</h4>
+            </div>
             <div class="card-body">
-                <h1 class="card-title text-center mb-3">🛠️ Tableau de Bord des Commandes</h1>
-                <p class="text-end mb-3"><a href="index.html" class="link-primary">← Retour au Formulaire de Commande</a></p>
-
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-success" onclick="fetchOrders()">🔄 Actualiser les commandes</button>
-                        <button id="deleteSelectedTopBtn" class="btn btn-outline-danger" onclick="deleteSelectedOrders()">🗑️ Supprimer la sélection</button>
+                <form id="adminLoginForm">
+                    <div class="mb-3">
+                        <label class="form-label">Token d'administration</label>
+                        <input id="adminTokenInput" type="password" class="form-control" placeholder="Entrez votre token" required />
+                        <div class="form-text">Le token est défini via la variable ADMIN_TOKEN sur Vercel.</div>
                     </div>
-                    <div id="loadingMessage" class="text-primary fw-bold">Chargement des commandes...</div>
-                </div>
-
-                <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
-
-                <!-- Barre d'actions en masse -->
-                <div id="bulkActionsBar" class="bulk-actions-bar alert alert-secondary d-flex align-items-center justify-content-between d-none position-fixed bottom-0 start-0 end-0 mx-3 mb-3 shadow">
-                    <div class="container d-flex align-items-center justify-content-between py-2">
-                        <div><span id="bulkSelectedCount" class="fw-bold">0 sélectionné(s)</span></div>
-                        <div>
-                            <button id="bulkDeleteBtn" class="btn btn-danger me-2" onclick="deleteSelectedOrders()">🗑️ Supprimer les sélectionnés</button>
-                            <button class="btn btn-light" onclick="document.getElementById('bulkActionsBar').classList.add('d-none')">✖️ Fermer</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Desktop: table view (md and up) -->
-                <div id="ordersTableContainer" class="table-responsive mt-3 d-none d-md-block">
-                    <table class="table table-striped table-hover align-middle">
-                        <thead class="table-primary">
-                            <tr>
-                                <th class="text-center"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)"></th>
-                                <th class="sortable" data-field="createdAt">📅 Date Commande</th>
-                                <th class="sortable" data-field="name">👤 Nom Client</th>
-                                <th class="sortable" data-field="email">📧 Email / Téléphone</th>
-                                <th class="sortable" data-field="date">📍 Date Retrait</th>
-                                <th class="sortable" data-field="renouveler">🔄 Renouvellement</th>
-                                <th>🛍️ Détail des Articles</th>
-                                <th>⚙️ Options</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ordersTableBody"></tbody>
-                    </table>
-                </div>
-
-                <!-- Mobile: card list (smaller devices) -->
-                <div id="ordersCardsContainer" class="d-block d-md-none mt-3"></div>
-
-                <nav aria-label="Pagination" class="d-flex justify-content-center mt-3">
-                    <div id="paginationContainer"></div>
-                </nav>
+                    <button class="btn btn-primary w-100" type="submit">Se connecter</button>
+                </form>
+                <div id="loginError" class="alert alert-danger mt-3 d-none"></div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap bundle (includes Popper) -->
+    <!-- Zone d'administration (masquée par défaut) -->
+    <div id="adminArea" class="container-fluid py-4 d-none">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">🛠️ Gestionnaire de Commandes (Admin)</h3>
+                <button id="logoutAdmin" class="btn btn-sm btn-outline-secondary">Déconnexion</button>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button id="refreshBtn" class="btn btn-success btn-sm">🔄 Actualiser</button>
+                        <button id="deleteSelectedBtn" class="btn btn-danger btn-sm d-none">🗑️ Supprimer sélection</button>
+                    </div>
+                    <div id="adminMessage" class="text-muted small"></div>
+                </div>
+
+                <div id="ordersTableContainer" class="table-responsive"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'édition -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Éditer la commande</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editOrderId" />
+                    <div class="mb-3">
+                        <label class="form-label">Date de retrait</label>
+                        <input type="date" id="editDate" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Renouveler</label>
+                        <select id="editRenouveler" class="form-select">
+                            <option value="">— Ne pas changer —</option>
+                            <option value="oui">oui</option>
+                            <option value="non">non</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" id="saveEditBtn" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    // Runtime check: ensure Bootstrap CSS/JS loaded
-    (function(){
-        function cssLoaded(){
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-primary d-none';
-            document.body.appendChild(btn);
-            const bg = window.getComputedStyle(btn).backgroundColor;
-            document.body.removeChild(btn);
-            return !!bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent';
-        }
-        function jsLoaded(){
-            return typeof bootstrap !== 'undefined';
-        }
-        document.addEventListener('DOMContentLoaded', () => {
-            const cssOk = cssLoaded();
-            const jsOk = jsLoaded();
-            if (!cssOk || !jsOk) {
-                console.warn('Bootstrap check: css=' + cssOk + ' js=' + jsOk);
-                const banner = document.createElement('div');
-                banner.className = 'alert alert-warning text-center';
-                banner.textContent = 'Attention: Bootstrap non chargé correctement (css=' + cssOk + ', js=' + jsOk + '). Vérifiez la connexion CDN.';
-                document.body.insertBefore(banner, document.body.firstChild);
-            }
-        });
-    })();
-    </script>
     <script src="script-gestionnaire.js"></script>
 </body>
 </html>

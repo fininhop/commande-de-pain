@@ -16,8 +16,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         logout.addEventListener('click', (e) => { e.preventDefault(); localStorage.removeItem('currentUser'); window.location.href = 'login.html'; });
     }
 
-    container.textContent = 'Chargement de vos commandes...';
-
     try {
         const response = await fetch('/api/get-orders-by-user', {
             method: 'POST',
@@ -35,28 +33,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const orders = (result && result.orders) ? result.orders : [];
         if (!orders.length) {
-            container.innerHTML = '<div class="alert alert-info">Aucune commande trouvée.</div>';
+            container.innerHTML = '<div class="alert alert-light text-center py-5"><h5>Aucune commande trouvée</h5><p class="text-muted">Vous n\'avez pas encore passé de commande.</p><a href="index.html" class="btn btn-primary">Commander maintenant</a></div>';
             return;
         }
 
         container.innerHTML = '';
         orders.forEach(o => {
             const card = document.createElement('div');
-            card.className = 'card order-card';
-            const itemsHtml = (o.items || []).map(it => `<div>${it.quantity} × ${it.name} <span class="small-muted">(${it.price ? '€ '+it.price : ''})</span></div>`).join('');
+            card.className = 'order-card';
+            const rn = (o.renouveler || '').toString().trim().toLowerCase();
+            const dateCmd = o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
+            
+            const itemsHtml = (o.items || []).map(it => 
+                `<div class="item-row"><span>${it.quantity} × ${it.name}</span><span class="text-muted">${it.price ? '€ '+it.price.toFixed(2) : ''}</span></div>`
+            ).join('');
+            
             card.innerHTML = `
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <strong>${o.name}</strong> — <span class="small-muted">${o.email} · ${o.phone}</span>
-                            <div class="small-muted">Commande: ${o.createdAt || '—'}</div>
-                        </div>
-                        <div class="text-end">
-                            <div class="small-muted">Retrait: ${o.date || '—'}</div>
-                            <div class="small-muted">Renouveler: ${o.renouveler || '—'}</div>
-                        </div>
+                <div class="order-header">
+                    <div class="order-date">📅 ${dateCmd}</div>
+                    <div class="order-id">ID: ${o.id}</div>
+                </div>
+                <div class="order-info">
+                    <div class="info-item">
+                        <span class="info-label">📍 Retrait:</span>
+                        <span class="info-value">${o.date || '—'}</span>
                     </div>
-                    <div class="mt-2">${itemsHtml}</div>
+                    <div class="info-item">
+                        <span class="info-label">🔄 Renouveler:</span>
+                        <span class="badge ${rn === 'oui' ? 'bg-success' : 'bg-secondary'}">${rn || '—'}</span>
+                    </div>
+                </div>
+                <div class="items-section">
+                    <div class="items-title">🛍️ Articles commandés</div>
+                    ${itemsHtml}
                 </div>
             `;
             container.appendChild(card);
