@@ -44,8 +44,9 @@ module.exports = async (req, res) => {
             // champ retiré
             items: items.map(item => ({
                 name: item.name,
-                quantity: item.quantity
-                // Le prix n'est pas stocké pour éviter les incohérences si le prix change
+                quantity: item.quantity,
+                price: typeof item.price === 'number' ? item.price : undefined,
+                unitWeight: typeof item.unitWeight === 'number' ? item.unitWeight : undefined
             })),
             userId: userId || null, // Associer la commande à un utilisateur enregistré
             timestamp: admin.firestore.FieldValue.serverTimestamp(), // Date d'enregistrement dans Firestore

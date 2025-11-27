@@ -297,15 +297,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const items = [];
         let hasProducts = false;
 
+        const NAME_WEIGHTS = window.NAME_WEIGHTS || {};
+        function normalizeKey(s){ return String(s||'').trim().toLowerCase(); }
+        function resolveMap(map, key){
+            const nk = normalizeKey(key);
+            if (nk in map) return map[nk];
+            for (const k of Object.keys(map)) { if (normalizeKey(k) === nk) return map[k]; }
+            return undefined;
+        }
         Object.keys(PRICES).forEach(productId => {
             const input = document.getElementById(productId);
             if (input) {
                 const quantity = parseInt(input.value) || 0;
                 if (quantity > 0) {
+                    const unitWeight = Number(resolveMap(NAME_WEIGHTS, PRODUCT_NAMES[productId]) || 0);
                     items.push({ 
                         name: PRODUCT_NAMES[productId], 
                         quantity: quantity, 
-                        price: PRICES[productId] // Ajout du prix pour référence
+                        price: PRICES[productId], // Ajout du prix
+                        unitWeight: unitWeight // Poids unitaire en kg si connu
                     });
                     hasProducts = true;
                 }
