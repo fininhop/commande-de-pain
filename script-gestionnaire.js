@@ -6,6 +6,24 @@ let currentSort = { field: 'createdAt', direction: 'desc' };
 let seasons = [];
 let selectedSeason = '';
 
+// Prix de référence pour calculer le total de commande par article
+const NAME_PRICES = {
+    'Blanc 400g': 3.60, 'Blanc 800g': 6.50, 'Blanc 1kg': 7.00,
+    'Complet 400g': 3.60, 'Complet 800g': 6.50, 'Complet 1kg': 7.00,
+    'Céréale 400g': 4.60, 'Céréale 800g': 8.50, 'Céréale 1kg': 9.00,
+    'Épeautre 400g': 4.60, 'Épeautre 800g': 8.50, 'Épeautre 1kg': 9.00,
+    'Sarrazin': 7.00
+};
+
+function computeOrderTotal(order) {
+    const items = order.items || [];
+    return items.reduce((sum, it) => {
+        const unit = (typeof it.price === 'number') ? it.price : (NAME_PRICES[it.name] || 0);
+        const qty = Number(it.quantity) || 0;
+        return sum + unit * qty;
+    }, 0);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginScreen = document.getElementById('adminLoginScreen');
     const adminArea = document.getElementById('adminArea');
@@ -62,7 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
             { field: 'name', label: '👤 Nom' },
             { field: 'email', label: '📧 Email' },
             { field: 'phone', label: '📞 Téléphone' },
-            { field: 'date', label: '📍 Retrait' }
+            { field: 'date', label: '📍 Retrait' },
+            { field: 'total', label: '💶 Total (€)' }
         ];
         
         headers.forEach(h => {
@@ -74,13 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
         filteredOrders.forEach(o => {
             const items = (o.items || []).map(it => `${it.quantity}× ${it.name}`).join(', ');
             const dateFormatted = o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : '—';
+            const orderTotal = computeOrderTotal(o);
             html += `<tr class="order-row" data-order-id="${o.id}" data-order-date="${o.date || ''}" data-order-ren="${rn}">`;
             html += `<td><small>${dateFormatted}</small></td>`;
             html += `<td>${o.name}</td>`;
             html += `<td><small>${o.email}</small></td>`;
             html += `<td><small>${o.phone}</small></td>`;
             html += `<td>${o.date || '—'}</td>`;
-            
+            html += `<td><strong>€ ${orderTotal.toFixed(2)}</strong></td>`;
             html += `<td><small>${items}</small></td>`;
             html += `<td><button class="btn btn-sm btn-outline-danger btn-delete me-1">Supprimer</button>`;
             html += `<button class="btn btn-sm btn-outline-secondary btn-edit">Éditer</button></td>`;
