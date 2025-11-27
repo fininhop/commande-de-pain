@@ -650,8 +650,10 @@ document.addEventListener('DOMContentLoaded', () => {
             (o.items || []).forEach(it => {
                 const priceFromMap = resolveMap(NAME_PRICES, it.name);
                 const unit = Number(priceFromMap !== undefined ? priceFromMap : (it.price || 0));
+                // Priorité au poids fourni par la commande, sinon mapping
+                const weightFromItem = (typeof it.unitWeight === 'number') ? it.unitWeight : undefined;
                 const weightFromMap = resolveMap(NAME_WEIGHTS, it.name);
-                const wkg = Number(weightFromMap || 0);
+                const wkg = Number(weightFromItem !== undefined ? weightFromItem : (weightFromMap || 0));
                 const qty = Number(it.quantity)||0;
                 const linePrice = unit * qty;
                 const lineWeight = wkg * qty;
@@ -736,9 +738,9 @@ document.addEventListener('DOMContentLoaded', () => {
         rows.push(['Client','Email','Téléphone','Saison','Article','Quantité','Prix Unitaire (€)','Poids Unitaire (kg)','Total Ligne (€)','Total Ligne Poids (kg)']);
         list.forEach(o => {
             (o.items || []).forEach(it => {
-                const qty = Number(it.quantity)||0;
-                const unitPrice = (typeof it.price === 'number') ? it.price : (prices[it.name] || 0);
-                const unitWeight = Number(weights[it.name] || 0);
+            const qty = Number(it.quantity)||0;
+            const unitPrice = (typeof it.price === 'number') ? it.price : (prices[it.name] || 0);
+            const unitWeight = (typeof it.unitWeight === 'number') ? it.unitWeight : Number(weights[it.name] || 0);
                 const linePrice = unitPrice * qty;
                 const lineWeight = unitWeight * qty;
                 rows.push([
