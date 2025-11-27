@@ -38,6 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminMessage = document.getElementById('adminMessage');
     const logoutAdmin = document.getElementById('logoutAdmin');
     const sortSelect = document.getElementById('sortSelect');
+    // Repositionner la section Produits après Saisons
+    try {
+        const prodItem = document.getElementById('headingProducts')?.closest('.accordion-item');
+        const seasonsItem = document.getElementById('headingSeasons')?.closest('.accordion-item');
+        if (prodItem && seasonsItem && seasonsItem.parentNode) {
+            seasonsItem.after(prodItem);
+        }
+    } catch(e) { /* noop */ }
     
         // Produits: chargement et CRUD
         let currentProducts = [];
@@ -46,25 +54,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await resp.json();
             if (!data.ok) return;
             currentProducts = data.products || [];
-            const tbody = document.querySelector('#productsTable tbody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
+            const grid = document.getElementById('productsGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
             currentProducts.forEach(p => {
-                const tr = document.createElement('tr');
-                const tdName = document.createElement('td');
-                tdName.textContent = String(p.name || '');
-                const tdPrice = document.createElement('td');
-                tdPrice.textContent = '€' + Number(p.price).toFixed(2);
-                const tdWeight = document.createElement('td');
-                tdWeight.textContent = Number(p.unitWeight).toFixed(3) + ' kg';
-                const tdActive = document.createElement('td');
-                const badge = document.createElement('span');
-                badge.className = 'badge ' + (p.active ? 'bg-success' : 'bg-secondary');
-                badge.textContent = p.active ? 'Actif' : 'Inactif';
-                tdActive.appendChild(badge);
-                const tdActions = document.createElement('td');
+                const col = document.createElement('div');
+                col.className = 'col-12 col-md-6';
+                const card = document.createElement('div');
+                card.className = 'card h-100 shadow-sm';
+                const body = document.createElement('div');
+                body.className = 'card-body';
+                const title = document.createElement('h6');
+                title.className = 'card-title fw-bold text-primary mb-2';
+                title.textContent = String(p.name || '');
+                const priceEl = document.createElement('p');
+                priceEl.className = 'card-text text-success fw-semibold fs-6 mb-1';
+                priceEl.textContent = '€ ' + Number(p.price).toFixed(2);
+                const weightEl = document.createElement('p');
+                weightEl.className = 'text-muted small mb-2';
+                weightEl.textContent = Number(p.unitWeight).toFixed(3) + ' kg / unité';
+                const activeBadge = document.createElement('span');
+                activeBadge.className = 'badge ' + (p.active ? 'bg-success' : 'bg-secondary');
+                activeBadge.textContent = p.active ? 'Actif' : 'Inactif';
+                activeBadge.style.marginRight = '8px';
+                const actions = document.createElement('div');
+                actions.className = 'd-flex justify-content-end gap-2';
                 const btnEdit = document.createElement('button');
-                btnEdit.className = 'btn btn-sm btn-outline-primary me-2';
+                btnEdit.className = 'btn btn-sm btn-outline-primary';
                 btnEdit.setAttribute('data-action', 'edit');
                 btnEdit.setAttribute('data-id', String(p.id));
                 btnEdit.textContent = 'Éditer';
@@ -73,17 +89,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnDelete.setAttribute('data-action', 'delete');
                 btnDelete.setAttribute('data-id', String(p.id));
                 btnDelete.textContent = 'Supprimer';
-                tdActions.appendChild(btnEdit);
-                tdActions.appendChild(btnDelete);
-                tr.appendChild(tdName);
-                tr.appendChild(tdPrice);
-                tr.appendChild(tdWeight);
-                tr.appendChild(tdActive);
-                tr.appendChild(tdActions);
-                tbody.appendChild(tr);
+                actions.appendChild(btnEdit); actions.appendChild(btnDelete);
+                body.appendChild(title);
+                body.appendChild(priceEl);
+                body.appendChild(weightEl);
+                body.appendChild(activeBadge);
+                body.appendChild(actions);
+                card.appendChild(body);
+                col.appendChild(card);
+                grid.appendChild(col);
             });
 
-            tbody.querySelectorAll('button').forEach(btn => {
+            grid.querySelectorAll('button').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = e.currentTarget.getAttribute('data-id');
                     const action = e.currentTarget.getAttribute('data-action');
