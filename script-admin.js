@@ -61,9 +61,58 @@ document.addEventListener('DOMContentLoaded', () => {
     sortSelect.addEventListener('change', () => {
         currentSortBy = sortSelect.value;
         if (currentOrders.length > 0) {
-            renderOrders(currentOrders, currentSortBy);
+            applyOrdersView();
         }
     });
+
+    // Prix connus pour calcul des totaux (par nom d'article)
+    const NAME_PRICES = {
+        'Blanc 400g': 3.60, 'Blanc 800g': 6.50, 'Blanc 1kg': 7.00,
+        'Complet 400g': 3.60, 'Complet 800g': 6.50, 'Complet 1kg': 7.00,
+        'Céréale 400g': 4.60, 'Céréale 800g': 8.50, 'Céréale 1kg': 9.00,
+        'Épeautre 400g': 4.60, 'Épeautre 800g': 8.50, 'Épeautre 1kg': 9.00,
+        'Sarrazin': 7.00,
+        'Sarrazin': 7.00
+    };
+
+    function computeOrderTotal(order) {
+        const items = order.items || [];
+        return items.reduce((sum, it) => {
+            const unit = (typeof it.price === 'number') ? it.price : (NAME_PRICES[it.name] || 0);
+            const qty = Number(it.quantity) || 0;
+            return sum + unit * qty;
+        }, 0);
+    }
+
+    const seasonStatsEl = document.getElementById('seasonStats');
+    const seasonOrderCountEl = document.getElementById('seasonOrderCount');
+    const seasonTotalPriceEl = document.getElementById('seasonTotalPrice');
+    const seasonAveragePriceEl = document.getElementById('seasonAveragePrice');
+
+    function updateSeasonStats(ordersForView) {
+        if (!seasonStatsEl) return;
+        const hasSeason = currentSeasonFilter && currentSeasonFilter !== 'all';
+        if (!hasSeason) {
+            seasonStatsEl.style.display = 'none';
+            return;
+        }
+        const count = ordersForView.length;
+        const total = ordersForView.reduce((s, o) => s + computeOrderTotal(o), 0);
+        const avg = count > 0 ? total / count : 0;
+        seasonOrderCountEl.textContent = String(count);
+        seasonTotalPriceEl.textContent = `€${total.toFixed(2)}`;
+        seasonAveragePriceEl.textContent = `€${avg.toFixed(2)}`;
+        seasonStatsEl.style.display = 'block';
+    }
+
+    function applyOrdersView() {
+        let list = [...currentOrders];
+        if (currentSeasonFilter && currentSeasonFilter !== 'all') {
+            list = list.filter(o => (o.seasonId || '') === currentSeasonFilter);
+        }
+        renderOrders(list, currentSortBy);
+        updateSeasonStats(list);
+    }
 
     function renderOrders(orders, sortBy = 'createdAt') {
         if (!orders || !orders.length) {
@@ -91,6 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     aVal = (a.renouveler || '').toLowerCase();
                     bVal = (b.renouveler || '').toLowerCase();
                     return aVal.localeCompare(bVal);
+                case 'season':
+                    aVal = (a.seasonName || a.seasonId || '').toLowerCase();
+                    bVal = (b.seasonName || b.seasonId || '').toLowerCase();
+                    return aVal.localeCompare(bVal);
                 default:
                     return 0;
             }
@@ -99,9 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Générer les cartes
         let html = '';
         sortedOrders.forEach(o => {
-            const items = (o.items || []).map(it => 
-                `<div class="item-row"><span>${it.quantity} × ${it.name}</span><span class="text-muted">${it.price ? '€' + (it.price * it.quantity).toFixed(2) : ''}</span></div>`
-            ).join('');
+            const items = (o.items || []).map(it => {
+                const unit = (typeof it.price === 'number') ? it.price : (NAME_PRICES[it.name] || 0);
+                const line = unit ? `€${(unit * (Number(it.quantity)||0)).toFixed(2)}` : '';
+                return `<div class="item-row"><span>${it.quantity} × ${it.name}</span><span class="text-muted">${line}</span></div>`;
+            }).join('');
+            const orderTotal = computeOrderTotal(o);
             
             const rn = (o.renouveler || '').toString().trim().toLowerCase();
             const rnBadge = rn === 'oui' 
@@ -122,8 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="col-12 col-md-6 col-lg-4">
                     <div class="order-card" data-order-id="${o.id}" data-order-date="${o.date || ''}" data-order-ren="${rn}">
                         <div class="order-header">
-                            <h6 class="order-title">👤 ${o.name}</h6>
-                            <p class="order-date">📅 ${dateCmd}</p>
+                            <h6 class="order-title">👤 ${o.name} ${o.seasonName ? `<span class='badge bg-info ms-1'>${o.seasonName}</span>` : ''}</h6>
+                            <p class="order-date">📅 ${dateCmd} &nbsp; <strong>Total: €${orderTotal.toFixed(2)}</strong></p>
                         </div>
                         <div class="order-body">
                             <div class="order-info">
@@ -367,6 +423,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         seasonFilter.innerHTML = options;
+        // Mettre à jour le filtre actuel si une saison active est auto-sélectionnée
+        const selected = seasonFilter.value || 'all';
+        currentSeasonFilter = selected;
+        applyOrdersView();
     }
 
     async function fetchAdminOrders(token) {
@@ -429,6 +489,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (newSeasonBtn && seasonModal) {
         newSeasonBtn.addEventListener('click', () => {
             openSeasonModal(null);
+        });
+    }
+
+    // Filtre par saison (afficher toutes ou une saison spécifique)
+    if (seasonFilter) {
+        seasonFilter.addEventListener('change', () => {
+            currentSeasonFilter = seasonFilter.value || 'all';
+            applyOrdersView();
         });
     }
 
