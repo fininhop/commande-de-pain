@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     try {
-      const resp = await fetch('/api/change-password', {
+      const resp = await fetch('/api/update-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, currentPassword, newPassword })
