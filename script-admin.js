@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else showToast(j.error || 'Erreur', 'Erreur');
                     }
                     if (action === 'edit') {
+                        try { console.debug('Produits: open edit modal for', prod); } catch(e){}
                         openProductModal(prod);
                     }
                 });
