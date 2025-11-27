@@ -43,6 +43,7 @@
             .d-flex.gap-2 { flex-direction:column; }
             h1 { font-size:20px; }
         }
+        .container { max-width: 950px; }
     </style>
 </head>
 <body>
@@ -75,19 +76,7 @@
                     </select>
                     <small class="text-muted fst-italic">Choisissez la saison pour laquelle vous souhaitez commander</small>
                 </div>
-                <div class="form-group">
-                    <label>Renouveler ma commande dans 15 jours</label>
-                    <div class="radio-group">
-                        <div class="radio-item">
-                            <input type="radio" id="renouveler_oui" name="renouveler" value="oui">
-                            <label for="renouveler_oui">Oui</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="renouveler_non" name="renouveler" value="non" checked>
-                            <label for="renouveler_non">Non</label>
-                        </div>
-                    </div>
-                </div>
+                
                 <div id="statusMessage" class="status-message hidden"></div>
                 <div class="submit-section">
                     <div class="submit-info">Votre commande sera enregistrée automatiquement.</div>

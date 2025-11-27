@@ -331,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
             seasonId: selectedSeason.id,
             seasonName: selectedSeason.name,
             date: selectedSeason.endDate, // Utiliser la date de fin de saison comme date de livraison
-            renouveler: document.querySelector('input[name="renouveler"]:checked').value, // Renouvellement
             items: items,
             userId: currentUser.userId || currentUser.id || null
         };

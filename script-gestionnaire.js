@@ -62,8 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { field: 'name', label: '👤 Nom' },
             { field: 'email', label: '📧 Email' },
             { field: 'phone', label: '📞 Téléphone' },
-            { field: 'date', label: '📍 Retrait' },
-            { field: 'renouveler', label: '🔄 Renouveler' }
+            { field: 'date', label: '📍 Retrait' }
         ];
         
         headers.forEach(h => {
@@ -74,7 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filteredOrders.forEach(o => {
             const items = (o.items || []).map(it => `${it.quantity}× ${it.name}`).join(', ');
-            const rn = (o.renouveler || '').toString().trim().toLowerCase();
             const dateFormatted = o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : '—';
             html += `<tr class="order-row" data-order-id="${o.id}" data-order-date="${o.date || ''}" data-order-ren="${rn}">`;
             html += `<td><small>${dateFormatted}</small></td>`;
@@ -82,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `<td><small>${o.email}</small></td>`;
             html += `<td><small>${o.phone}</small></td>`;
             html += `<td>${o.date || '—'}</td>`;
-            html += `<td><span class="badge ${rn === 'oui' ? 'bg-success' : 'bg-secondary'}">${rn || '—'}</span></td>`;
+            
             html += `<td><small>${items}</small></td>`;
             html += `<td><button class="btn btn-sm btn-outline-danger btn-delete me-1">Supprimer</button>`;
             html += `<button class="btn btn-sm btn-outline-secondary btn-edit">Éditer</button></td>`;
@@ -104,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
         const editOrderId = document.getElementById('editOrderId');
         const editDate = document.getElementById('editDate');
-        const editRen = document.getElementById('editRenouveler');
+        const editRen = null;
         const saveEditBtn = document.getElementById('saveEditBtn');
 
         ordersTableContainer.querySelectorAll('.btn-delete').forEach(btn => {
@@ -141,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tr = e.target.closest('tr');
                 const orderId = tr && tr.getAttribute('data-order-id');
                 const date = tr && tr.getAttribute('data-order-date');
-                const rn = tr && tr.getAttribute('data-order-ren');
+                const rn = null;
                 if (!orderId || !modal) return;
                 editOrderId.value = orderId;
                 editDate.value = date || '';
@@ -155,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const orderId = editOrderId.value;
                 const updates = {};
                 if (editDate.value) updates.date = editDate.value;
-                if (editRen.value) updates.renouveler = editRen.value;
+                
                 if (!orderId || Object.keys(updates).length === 0) { modal.hide(); return; }
                 const token = localStorage.getItem('adminToken');
                 try {

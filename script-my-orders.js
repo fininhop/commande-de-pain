@@ -71,7 +71,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         orders.forEach(o => {
             const card = document.createElement('div');
             card.className = 'order-card';
-            const rn = (o.renouveler || '').toString().trim().toLowerCase();
             const dateCmd = o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
             
             const itemsHtml = (o.items || []).map(it => 
@@ -87,10 +86,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="info-item">
                         <span class="info-label">📍 Retrait:</span>
                         <span class="info-value">${o.date || '—'}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">🔄 Renouveler:</span>
-                        <span class="badge ${rn === 'oui' ? 'bg-success' : 'bg-secondary'}">${rn || '—'}</span>
                     </div>
                 </div>
                 <div class="items-section">

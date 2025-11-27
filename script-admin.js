@@ -137,9 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     bVal = (b.name || '').toLowerCase();
                     return aVal.localeCompare(bVal);
                 case 'renouveler':
-                    aVal = (a.renouveler || '').toLowerCase();
-                    bVal = (b.renouveler || '').toLowerCase();
-                    return aVal.localeCompare(bVal);
+                    return 0;
                 case 'season':
                     aVal = (a.seasonName || a.seasonId || '').toLowerCase();
                     bVal = (b.seasonName || b.seasonId || '').toLowerCase();
@@ -159,12 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }).join('');
             const orderTotal = computeOrderTotal(o);
             
-            const rn = (o.renouveler || '').toString().trim().toLowerCase();
-            const rnBadge = rn === 'oui' 
-                ? '<span class="badge bg-success">🔄 Oui</span>' 
-                : rn === 'non' 
-                    ? '<span class="badge bg-secondary">❌ Non</span>' 
-                    : '<span class="badge bg-light text-muted">—</span>';
             
             const dateCmd = o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR', { 
                 year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
@@ -191,10 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span class="info-label">📍 Retrait</span>
                                     <span class="info-value">${dateRetrait}</span>
                                 </div>
-                                <div class="info-item">
-                                    <span class="info-label">🔄 Renouveler</span>
-                                    <span class="info-value">${rnBadge}</span>
-                                </div>
+                                
                             </div>
                             
                             <div class="items-section">
@@ -248,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
         const editOrderId = document.getElementById('editOrderId');
         const editDate = document.getElementById('editDate');
-        const editRen = document.getElementById('editRenouveler');
+        const editRen = null;
         const saveEditBtn = document.getElementById('saveEditBtn');
 
         ordersContainer.querySelectorAll('.btn-edit').forEach(btn => {
@@ -256,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const card = e.target.closest('.order-card');
                 const orderId = card && card.getAttribute('data-order-id');
                 const date = card && card.getAttribute('data-order-date');
-                const rn = card && card.getAttribute('data-order-ren');
+                const rn = null;
                 if (!orderId || !modal) return;
                 editOrderId.value = orderId;
                 editDate.value = (date || '');
@@ -270,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const orderId = editOrderId.value;
                 const updates = {};
                 if (editDate.value) updates.date = editDate.value;
-                if (editRen.value) updates.renouveler = editRen.value;
+                
                 if (!orderId || Object.keys(updates).length === 0) { modal.hide(); return; }
                 const token = localStorage.getItem('adminToken');
                 try {
