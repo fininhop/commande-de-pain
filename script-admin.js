@@ -336,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSortBy = 'createdAt';
     let currentSeasons = [];
     let currentSeasonFilter = 'all';
+    const exportSeasonPdfBtn = document.getElementById('exportSeasonPdf');
 
     // Fonctions de gestion des saisons
     async function fetchSeasons(token) {
@@ -550,6 +551,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Export PDF for selected season/week
+    if (exportSeasonPdfBtn) {
+        exportSeasonPdfBtn.addEventListener('click', () => {
+            try {
+                exportSeasonPdf();
+            } catch (e) {
+                console.error('Erreur export PDF:', e);
+                showToast('❌ Erreur', 'Export PDF impossible', 'error');
+            }
+        });
+    }
+
     // Sauvegarder (créer/mettre à jour) une saison
     if (saveSeasonBtn && seasonModal) {
         saveSeasonBtn.addEventListener('click', async () => {
@@ -606,6 +619,60 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = document.getElementById('seasonModalLabel');
         if (title) title.textContent = season ? 'Éditer la saison' : 'Nouvelle saison';
         seasonModal.show();
+    }
+
+    function exportSeasonPdf() {
+        const list = currentSeasonFilter === 'all' ? currentOrders : currentOrders.filter(o => (o.seasonId || '') === currentSeasonFilter);
+        const seasonName = (currentSeasons.find(s => s.id === currentSeasonFilter)?.name) || (currentSeasonFilter === 'all' ? 'Toutes les saisons' : currentSeasonFilter);
+        const totalSum = list.reduce((s,o)=> s + computeOrderTotal(o), 0);
+
+        // jsPDF
+        const { jsPDF } = window.jspdf || {};
+        if (!jsPDF) { throw new Error('jsPDF non chargé'); }
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+        const left = 40, topStart = 60; let y = topStart;
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+        doc.text(`Rapport commandes – ${seasonName}`, left, y);
+        y += 24;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+        doc.text(`Total commandes: ${list.length}`, left, y); y += 18;
+        doc.text(`Total prix: €${totalSum.toFixed(2)}`, left, y); y += 24;
+
+        // Table header
+        doc.setFont('helvetica', 'bold');
+        doc.text('Nom', left, y);
+        doc.text('Email', left + 180, y);
+        doc.text('Téléphone', left + 340, y);
+        doc.text('Total (€)', left + 460, y);
+        y += 14;
+        doc.setLineWidth(0.5); doc.line(left, y, left + 520, y);
+        y += 10;
+        doc.setFont('helvetica', 'normal');
+
+        const lineHeight = 14; const pageHeight = doc.internal.pageSize.getHeight();
+        list.forEach(o => {
+            const name = o.name || '—';
+            const email = o.email || '—';
+            const phone = o.phone || '—';
+            const total = computeOrderTotal(o).toFixed(2);
+
+            if (y + lineHeight > pageHeight - 40) { doc.addPage(); y = topStart; }
+            doc.text(String(name), left, y);
+            doc.text(String(email), left + 180, y);
+            doc.text(String(phone), left + 340, y);
+            doc.text(`€${total}`, left + 460, y);
+            y += lineHeight;
+        });
+
+        // Footer total
+        if (y + 24 > pageHeight - 40) { doc.addPage(); y = topStart; }
+        y += 10; doc.setLineWidth(0.5); doc.line(left, y, left + 520, y); y += 18;
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Total général: €${totalSum.toFixed(2)}`, left, y);
+
+        const filename = `commandes_${seasonName.replace(/\s+/g,'_')}.pdf`;
+        doc.save(filename);
     }
 
     // Chargement et rendu des utilisateurs
