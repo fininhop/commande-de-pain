@@ -1,7 +1,7 @@
-import { getFirestore } from 'firebase-admin/firestore';
-import { initFirebase } from './verify-user.js';
+const { getFirestore } = require('firebase-admin/firestore');
+const { initFirebase } = require('./verify-user.js');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   try {
     initFirebase();
     const db = getFirestore();
