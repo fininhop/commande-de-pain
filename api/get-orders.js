@@ -40,6 +40,10 @@ module.exports = async (req, res) => {
     }
 
     try {
+        // Optionnel: sécuriser vue admin avec token
+        const provided = req.headers['x-admin-token'] || req.query.adminToken || null;
+        const expected = process.env.ADMIN_TOKEN || null;
+        const isAdmin = expected && provided === expected;
         // Récupérer TOUTES les commandes sans ordre d'abord (pour compatibilité avec anciennes données)
         const snapshot = await global.db.collection('orders').get();
 
@@ -55,6 +59,8 @@ module.exports = async (req, res) => {
                 email: data.email || 'N/A',
                 phone: data.phone || 'N/A',
                 date: data.date, // Date de retrait
+                seasonId: isAdmin ? (data.seasonId || null) : undefined,
+                seasonName: isAdmin ? (data.seasonName || null) : undefined,
                 // champ supprimé
                 items: data.items,
                 createdAt: createdAt,

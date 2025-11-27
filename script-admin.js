@@ -569,7 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchAdminOrders(token) {
         showMessage('Chargement...', 'muted');
         try {
-            const response = await fetch('/api/get-orders-admin', { headers: { 'x-admin-token': token } });
+            const response = await fetch('/api/get-orders', { headers: { 'x-admin-token': token } });
             let result = null;
             try { result = await response.json(); } catch(e) { result = null; }
 
