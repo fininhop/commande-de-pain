@@ -55,13 +55,20 @@ async function loadSeasons() {
         if (response.ok && result.seasons) {
             availableSeasons = result.seasons;
             populateSeasonSelect();
+            if (!availableSeasons || availableSeasons.length === 0) {
+                setOrderingAvailability(false, 'Commande momentanément indisponible. Aucune saison n\'est créée. Veuillez réessayer plus tard.');
+            } else {
+                setOrderingAvailability(true);
+            }
         } else {
             console.error('Erreur chargement saisons:', result.message);
             showToast('Erreur', 'Impossible de charger les saisons disponibles.', 'error');
+            setOrderingAvailability(false, 'Commande momentanément indisponible (erreur de chargement des saisons).');
         }
     } catch (error) {
         console.error('Erreur réseau saisons:', error);
         showToast('Erreur réseau', 'Impossible de charger les saisons.', 'error');
+        setOrderingAvailability(false, 'Commande momentanément indisponible (erreur réseau).');
     }
 }
 
@@ -90,6 +97,29 @@ function populateSeasonSelect() {
 
         seasonSelect.appendChild(option);
     });
+}
+
+// Activer/Désactiver la possibilité de commander selon disponibilité des saisons
+function setOrderingAvailability(enabled, message) {
+    const form = document.getElementById('clientOrderForm');
+    const submitButtons = form ? form.querySelectorAll('.submit-buttons .submit-btn, button[type="submit"]') : [];
+    const infoBanner = document.getElementById('basket-info-message');
+    if (!enabled) {
+        submitButtons.forEach(btn => { btn.disabled = true; btn.classList.add('disabled'); });
+        if (infoBanner) {
+            infoBanner.classList.remove('alert-info');
+            infoBanner.classList.add('alert-warning');
+            infoBanner.innerHTML = message || 'Commande momentanément indisponible. Veuillez réessayer plus tard.';
+        }
+        try { showMessageModal('Indisponible', message || 'Commande momentanément indisponible. Veuillez réessayer plus tard.', 'warning'); } catch(e){}
+    } else {
+        submitButtons.forEach(btn => { btn.disabled = false; btn.classList.remove('disabled'); });
+        if (infoBanner) {
+            infoBanner.classList.remove('alert-warning');
+            infoBanner.classList.add('alert-info');
+            infoBanner.innerHTML = 'Aucun produit dans votre panier.';
+        }
+    }
 }
 
 function renderClientProducts(products){
