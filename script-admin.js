@@ -53,6 +53,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const seasonEndInput = document.getElementById('seasonEnd');
     const seasonDescInput = document.getElementById('seasonDescription');
 
+    // Fonction utilitaire: ouvrir le modal (création ou édition de saison)
+    function openSeasonModal(season) {
+        if (!seasonModal) return;
+        if (season) {
+            seasonIdInput.value = season.id || '';
+            seasonNameInput.value = season.name || '';
+            seasonStartInput.value = season.startDate || '';
+            seasonEndInput.value = season.endDate || '';
+            seasonDescInput.value = season.description || '';
+            if (saveSeasonBtn) saveSeasonBtn.textContent = 'Mettre à jour';
+        } else {
+            seasonIdInput.value = '';
+            seasonNameInput.value = '';
+            seasonStartInput.value = '';
+            seasonEndInput.value = '';
+            seasonDescInput.value = '';
+            if (saveSeasonBtn) saveSeasonBtn.textContent = 'Créer';
+        }
+        seasonModal.show();
+    }
+
     // Utilisateurs (Administrer utilisateurs)
     const adminUsersList = document.getElementById('adminUsersList');
     const adminUserSearchQuery = document.getElementById('adminUserSearchQuery');
