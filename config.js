@@ -32,5 +32,19 @@ window.NAME_PRICES = window.NAME_PRICES || {
 window.NAME_WEIGHTS = window.NAME_WEIGHTS || {
     "Pain 1kg": 1.0,
     "Pain 500g": 0.5,
-    "Baguette": 0.250
+    "Baguette": 0.250,
+    // Formats détaillés pour correspondre aux libellés utilisés
+    'Blanc 400g': 0.400,
+    'Blanc 800g': 0.800,
+    'Blanc 1kg': 1.000,
+    'Complet 400g': 0.400,
+    'Complet 800g': 0.800,
+    'Complet 1kg': 1.000,
+    'Céréale 400g': 0.400,
+    'Céréale 800g': 0.800,
+    'Céréale 1kg': 1.000,
+    'Épeautre 400g': 0.400,
+    'Épeautre 800g': 0.800,
+    'Épeautre 1kg': 1.000,
+    'Sarrazin': 1.000
 };
