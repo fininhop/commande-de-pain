@@ -623,7 +623,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function exportSeasonPdf() {
         const list = currentSeasonFilter === 'all' ? currentOrders : currentOrders.filter(o => (o.seasonId || '') === currentSeasonFilter);
-        const seasonName = (currentSeasons.find(s => s.id === currentSeasonFilter)?.name) || (currentSeasonFilter === 'all' ? 'Toutes les saisons' : currentSeasonFilter);
+        const seasonObj = currentSeasons.find(s => s.id === currentSeasonFilter);
+        const seasonName = (seasonObj?.name) || (currentSeasonFilter === 'all' ? 'Toutes les saisons' : currentSeasonFilter);
+        const seasonStartStr = seasonObj && seasonObj.startDate ? new Date(seasonObj.startDate).toLocaleDateString('fr-FR') : null;
+        const seasonEndStr = seasonObj && seasonObj.endDate ? new Date(seasonObj.endDate).toLocaleDateString('fr-FR') : null;
         const totalSum = list.reduce((s,o)=> s + computeOrderTotal(o), 0);
 
         // jsPDF
@@ -634,7 +637,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const left = 40, topStart = 60; let y = topStart;
         doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
         doc.text(`Rapport commandes – ${seasonName}`, left, y);
-        y += 24;
+        y += 18;
+        if (seasonStartStr && seasonEndStr) {
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+            doc.text(`Semaine: du ${seasonStartStr} au ${seasonEndStr}`, left, y);
+            y += 18;
+        } else {
+            y += 6;
+        }
         doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
         doc.text(`Total commandes: ${list.length}`, left, y); y += 18;
         doc.text(`Total prix: €${totalSum.toFixed(2)}`, left, y); y += 24;
