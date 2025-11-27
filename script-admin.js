@@ -88,6 +88,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const seasonOrderCountEl = document.getElementById('seasonOrderCount');
     const seasonTotalPriceEl = document.getElementById('seasonTotalPrice');
     const seasonAveragePriceEl = document.getElementById('seasonAveragePrice');
+    const allSeasonsStatsEl = document.getElementById('allSeasonsStats');
+    const allSeasonsStatsBodyTbody = (function(){
+        const el = document.querySelector('#allSeasonsStatsBody tbody');
+        return el;
+    })();
+    const allSeasonsTotalCountEl = document.getElementById('allSeasonsTotalCount');
+    const allSeasonsTotalPriceEl = document.getElementById('allSeasonsTotalPrice');
+    const allSeasonsAvgPriceEl = document.getElementById('allSeasonsAvgPrice');
 
     function updateSeasonStats(ordersForView) {
         if (!seasonStatsEl) return;
@@ -112,6 +120,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         renderOrders(list, currentSortBy);
         updateSeasonStats(list);
+        updateAllSeasonsStats(currentOrders);
+    }
+
+    function updateAllSeasonsStats(orders) {
+        if (!allSeasonsStatsEl || !allSeasonsStatsBodyTbody) return;
+        const bySeason = new Map();
+        orders.forEach(o => {
+            const key = o.seasonName || o.seasonId || '—';
+            const total = computeOrderTotal(o);
+            const entry = bySeason.get(key) || { count: 0, sum: 0 };
+            entry.count += 1;
+            entry.sum += total;
+            bySeason.set(key, entry);
+        });
+        const rows = Array.from(bySeason.entries()).sort((a,b) => String(a[0]).localeCompare(String(b[0]))).map(([name, stats]) => {
+            const avg = stats.count ? (stats.sum / stats.count) : 0;
+            return `<tr><td>${name}</td><td>${stats.count}</td><td>€${stats.sum.toFixed(2)}</td><td>€${avg.toFixed(2)}</td></tr>`;
+        }).join('');
+        allSeasonsStatsBodyTbody.innerHTML = rows || '<tr><td colspan="4" class="text-muted">Aucune donnée</td></tr>';
+        const totalCount = orders.length;
+        const totalSum = orders.reduce((s,o)=> s + computeOrderTotal(o), 0);
+        const totalAvg = totalCount ? (totalSum / totalCount) : 0;
+        allSeasonsTotalCountEl.textContent = String(totalCount);
+        allSeasonsTotalPriceEl.textContent = `€${totalSum.toFixed(2)}`;
+        allSeasonsAvgPriceEl.textContent = `€${totalAvg.toFixed(2)}`;
     }
 
     function renderOrders(orders, sortBy = 'createdAt') {
