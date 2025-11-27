@@ -142,6 +142,10 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         msg.textContent = '';
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.classList.add('btn-loading');
+        disableForm(form);
+        showPageLoader('Création du compte…');
 
         const name = nameInput.value.trim();
         const email = emailInput.value.trim().toLowerCase();
@@ -224,6 +228,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error('Erreur enregistrement:', err);
             msg.innerHTML = '<div class="alert alert-danger">Erreur réseau. Réessayez.</div>';
+        } finally {
+            if (submitBtn) submitBtn.classList.remove('btn-loading');
+            enableForm(form);
+            hidePageLoader();
         }
     });
 });

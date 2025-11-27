@@ -29,6 +29,7 @@ function showToast(title, message, type = 'info') {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    showPageLoader('Chargement des commandes…');
     const container = document.getElementById('ordersList');
     const logout = document.getElementById('logoutLink');
 
@@ -100,5 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Erreur récupération commandes:', err);
         showToast('❌ Erreur réseau', 'Impossible de charger les commandes.', 'error');
         container.innerHTML = '<div class="alert alert-warning">Erreur réseau. Réessayez plus tard.</div>';
+    } finally {
+        hidePageLoader();
     }
 });

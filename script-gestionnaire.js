@@ -289,6 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         loginError.classList.add('d-none');
         showMessage('Vérification...', 'muted');
+        disableForm(loginForm);
+        showPageLoader('Connexion gestionnaire…');
 
         try {
             const resp = await fetch('/api/get-orders-admin', { headers: { 'x-admin-token': token } });
@@ -303,13 +305,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (err) {
             showLoginError('Erreur réseau. Réessayez.');
+        } finally {
+            enableForm(loginForm);
+            hidePageLoader();
         }
     });
 
-    refreshBtn.addEventListener('click', () => {
+    refreshBtn.addEventListener('click', async () => {
         const t = localStorage.getItem('adminToken');
         if (!t) { showMessage('Token manquant', 'danger'); return; }
-        fetchAdminOrders(t);
+        showPageLoader('Actualisation des données…');
+        try { await fetchAdminOrders(t); } finally { hidePageLoader(); }
     });
 
     logoutBtn.addEventListener('click', () => {

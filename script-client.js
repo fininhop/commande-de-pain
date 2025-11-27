@@ -219,6 +219,7 @@ window.updateTotal = function() {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    showPageLoader('Chargement des produits…');
     // Vérifier qu'un utilisateur est connecté/enregistré
     const stored = localStorage.getItem('currentUser');
     let currentUser = null;
@@ -231,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Charger les saisons disponibles
-    loadSeasons();
+    loadSeasons().finally(() => { try { hidePageLoader(); } catch(e){} });
 
     const form = document.getElementById('clientOrderForm');
     const statusMessage = document.getElementById('statusMessage');
@@ -287,6 +288,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.classList.add('btn-loading');
+        disableForm(form);
+        showPageLoader('Enregistrement de la commande…');
         
         statusMessage.textContent = '';
         statusMessage.className = 'status-message hidden';
@@ -369,6 +374,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Erreur de connexion à l\'API:', error);
             showToast('❌ Erreur réseau', 'Veuillez réessayer.', 'error');
+        } finally {
+            if (submitBtn) submitBtn.classList.remove('btn-loading');
+            enableForm(form);
+            hidePageLoader();
         }
     });
 });

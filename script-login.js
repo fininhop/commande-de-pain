@@ -58,6 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         msg.textContent = '';
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.classList.add('btn-loading');
+        disableForm(form);
+        showPageLoader('Connexion…');
 
         const email = emailInput.value.trim().toLowerCase();
         const password = passwordInput.value;
@@ -112,6 +116,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error('Erreur login:', err);
             msg.innerHTML = '<div class="alert alert-danger">Erreur réseau. Réessayez.</div>';
+        } finally {
+            if (submitBtn) submitBtn.classList.remove('btn-loading');
+            enableForm(form);
+            hidePageLoader();
         }
     });
 });

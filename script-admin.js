@@ -248,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!orderId) return;
                 if (!confirm(`Confirmer la suppression de la commande de ${clientName} ?`)) return;
                 const token = localStorage.getItem('adminToken');
+                showPageLoader('Suppression…');
                 try {
                     const resp = await fetch('/api/delete-order', {
                         method: 'POST',
@@ -264,6 +265,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (err) {
                     console.error('Erreur delete:', err);
                     showToast('❌ Erreur réseau', 'Impossible de supprimer la commande', 'error');
+                } finally {
+                    hidePageLoader();
                 }
             });
         });
@@ -298,6 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (!orderId || Object.keys(updates).length === 0) { modal.hide(); return; }
                 const token = localStorage.getItem('adminToken');
+                showPageLoader('Mise à jour…');
                 try {
                     const resp = await fetch('/api/update-order', {
                         method: 'POST',
@@ -315,6 +319,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (err) {
                     console.error('Erreur update:', err);
                     showToast('❌ Erreur réseau', 'Impossible de mettre à jour', 'error');
+                } finally {
+                    hidePageLoader();
                 }
             };
         }
@@ -484,22 +490,32 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchSeasons(storedToken);
     }
 
-    adminForm.addEventListener('submit', (e) => {
+    adminForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const token = tokenInput.value.trim();
         if (!token) return;
+        showPageLoader('Connexion administrateur…');
+        disableForm(adminForm);
         localStorage.setItem('adminToken', token);
         adminLogin.classList.add('d-none');
         adminArea.classList.remove('d-none');
-        fetchAdminOrders(token);
-        fetchSeasons(token);
+        try {
+            await Promise.all([fetchAdminOrders(token), fetchSeasons(token)]);
+        } finally {
+            enableForm(adminForm);
+            hidePageLoader();
+        }
     });
 
-    refreshBtn.addEventListener('click', () => {
+    refreshBtn.addEventListener('click', async () => {
         const t = localStorage.getItem('adminToken');
         if (!t) { showMessage('Token manquant', 'danger'); return; }
-        fetchAdminOrders(t);
-        fetchSeasons(t);
+        showPageLoader('Actualisation des données…');
+        try {
+            await Promise.all([fetchAdminOrders(t), fetchSeasons(t)]);
+        } finally {
+            hidePageLoader();
+        }
     });
 
     logoutAdmin.addEventListener('click', () => {
