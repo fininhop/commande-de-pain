@@ -665,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
         y += 12;
         doc.setFont('helvetica', 'normal');
 
-        const lineHeight = 14; const pageHeight = doc.internal.pageSize.getHeight();
+        const lineHeight = 16; const pageHeight = doc.internal.pageSize.getHeight();
         list.forEach(o => {
             const name = o.name || '—';
             const total = computeOrderTotal(o).toFixed(2);
@@ -674,7 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Lignes zébrées pour lisibilité
             if (((y - topStart) / lineHeight) % 2 < 1) {
                 doc.setFillColor(252, 252, 252);
-                doc.rect(left - 6, y - 10, 520, 16, 'F');
+                doc.rect(left - 6, y - 12, 520, lineHeight, 'F');
             }
             doc.text(String(name), left, y);
             doc.text(`€${total}`, left + 420, y);
@@ -692,7 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 doc.setFont('helvetica', 'italic');
                 doc.text('Détails:', itemLeft, y);
                 doc.setFont('helvetica', 'normal');
-                y += lineHeight - 4;
+                y += lineHeight - 6;
                 // En-tête colonnes: Article | Quantité | Prix Unitaire | Total (€)
                 doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
                 doc.text('Article', itemLeft, y);
@@ -712,13 +712,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     // zebra pour items
                     if (((y - topStart) / lineHeight) % 2 < 1) {
                         doc.setFillColor(253, 253, 253);
-                        doc.rect(itemLeft - 6, y - 10, 440, 16, 'F');
+                        doc.rect(itemLeft - 6, y - 12, 440, lineHeight, 'F');
                     }
                     doc.text(itName, itemLeft, y);
                     doc.text(String(qty), itemLeft + 250, y);
                     doc.text(`€${unit.toFixed(2)}`, itemLeft + 300, y);
                     doc.text(`€${lineTotal}`, itemLeft + 380, y);
-                    y += lineHeight - 2;
+                    y += lineHeight;
                 });
                 doc.setFontSize(11);
                 // Sous-total de la commande
@@ -727,7 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 doc.setFont('helvetica', 'bold');
                 doc.text(`Sous-total commande: €${orderTotal.toFixed(2)}`, itemLeft, y);
                 doc.setFont('helvetica', 'normal');
-                y += 10;
+                y += 12;
             }
         });
 
@@ -772,12 +772,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (y + lineHeight > pageHeight - 40) { doc.addPage(); y = topStart; }
                 if (((y - topStart) / lineHeight) % 2 < 1) {
                     doc.setFillColor(253, 253, 253);
-                    doc.rect(left - 6, y - 10, 520, 16, 'F');
+                    doc.rect(left - 6, y - 12, 520, lineHeight, 'F');
                 }
                 doc.text(String(name), left, y);
                 doc.text(String(data.qty), left + 250, y);
                 doc.text(`€${data.amount.toFixed(2)}`, left + 380, y);
-                y += lineHeight - 2;
+                y += lineHeight;
             });
         }
 
