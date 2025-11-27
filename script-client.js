@@ -289,9 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.classList.add('btn-loading');
-        disableForm(form);
-        showPageLoader('Enregistrement de la commande…');
         
         statusMessage.textContent = '';
         statusMessage.className = 'status-message hidden';
@@ -343,6 +340,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 3. Envoi à l'API Vercel
         try {
+            if (submitBtn) submitBtn.classList.add('btn-loading');
+            disableForm(form);
+            showPageLoader('Enregistrement de la commande…');
             const response = await fetch('/api/save-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

@@ -143,9 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         msg.textContent = '';
         const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.classList.add('btn-loading');
-        disableForm(form);
-        showPageLoader('Création du compte…');
 
         const name = nameInput.value.trim();
         const email = emailInput.value.trim().toLowerCase();
@@ -184,6 +181,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            if (submitBtn) submitBtn.classList.add('btn-loading');
+            disableForm(form);
+            showPageLoader('Création du compte…');
             // Envoyer le mot de passe au serveur (qui le hashera avec bcryptjs côté serveur)
             const response = await fetch('/api/save-user', {
                 method: 'POST',

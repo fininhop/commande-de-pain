@@ -59,9 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         msg.textContent = '';
         const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.classList.add('btn-loading');
-        disableForm(form);
-        showPageLoader('Connexion…');
 
         const email = emailInput.value.trim().toLowerCase();
         const password = passwordInput.value;
@@ -78,6 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            if (submitBtn) submitBtn.classList.add('btn-loading');
+            disableForm(form);
+            showPageLoader('Connexion…');
             // Appeler l'API pour vérifier les credentials
             const response = await fetch('/api/verify-user', {
                 method: 'POST',
