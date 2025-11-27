@@ -634,38 +634,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!jsPDF) { throw new Error('jsPDF non chargé'); }
         const doc = new jsPDF({ unit: 'pt', format: 'a4' });
 
-        const left = 40, topStart = 60; let y = topStart;
+        const left = 40, topStart = 64; let y = topStart;
         // En-tête stylisée
         doc.setFillColor(245, 245, 245);
-        doc.rect(left - 20, y - 30, 540, 50, 'F');
+        doc.rect(left - 20, y - 34, 540, 56, 'F');
         doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
         doc.text(`Rapport commandes – ${seasonName}`, left, y);
         // Ligne de contexte (date de génération)
         const genDate = new Date().toLocaleString('fr-FR');
         doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
         doc.text(`Généré le ${genDate}` , left + 360, y);
-        y += 16;
+        y += 18;
         if (seasonStartStr && seasonEndStr) {
             doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
             doc.text(`Semaine: du ${seasonStartStr} au ${seasonEndStr}`, left, y);
-            y += 18;
+            y += 20;
         } else {
-            y += 6;
+            y += 10;
         }
         doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
-        doc.text(`Total commandes: ${list.length}`, left, y); y += 16;
-        doc.text(`Total prix: €${totalSum.toFixed(2)}`, left, y); y += 20;
+        doc.text(`Total commandes: ${list.length}`, left, y); y += 18;
+        doc.text(`Total prix: €${totalSum.toFixed(2)}`, left, y); y += 24;
 
         // En-tête de table commandes (fond léger)
         doc.setFillColor(235, 239, 242);
-        doc.rect(left - 6, y - 10, 520, 20, 'F');
+        doc.rect(left - 6, y - 12, 520, 24, 'F');
         doc.setFont('helvetica', 'bold');
         doc.text('Nom', left, y);
         doc.text('Total (€)', left + 420, y);
-        y += 12;
+        y += 16;
         doc.setFont('helvetica', 'normal');
 
-        const lineHeight = 16; const pageHeight = doc.internal.pageSize.getHeight();
+        const lineHeight = 18; const pageHeight = doc.internal.pageSize.getHeight();
         list.forEach(o => {
             const name = o.name || '—';
             const total = computeOrderTotal(o).toFixed(2);
@@ -674,11 +674,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Lignes zébrées pour lisibilité
             if (((y - topStart) / lineHeight) % 2 < 1) {
                 doc.setFillColor(252, 252, 252);
-                doc.rect(left - 6, y - 12, 520, lineHeight, 'F');
+                doc.rect(left - 6, y - (lineHeight - 6), 520, lineHeight + 2, 'F');
             }
             doc.text(String(name), left, y);
             doc.text(`€${total}`, left + 420, y);
             y += lineHeight;
+            y += 2;
 
             // Détails par commande: pains, quantités, prix unitaires et total ligne
             const items = Array.isArray(o.items) ? o.items : [];
@@ -688,18 +689,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (y + lineHeight > pageHeight - 40) { doc.addPage(); y = topStart; }
                 // Sous-en-tête détails
                 doc.setFillColor(245, 245, 245);
-                doc.rect(itemLeft - 6, y - 10, 440, 18, 'F');
+                doc.rect(itemLeft - 6, y - 12, 440, 22, 'F');
                 doc.setFont('helvetica', 'italic');
                 doc.text('Détails:', itemLeft, y);
                 doc.setFont('helvetica', 'normal');
-                y += lineHeight - 6;
+                y += lineHeight - 8;
                 // En-tête colonnes: Article | Quantité | Prix Unitaire | Total (€)
                 doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
                 doc.text('Article', itemLeft, y);
                 doc.text('Quantité', itemLeft + 250, y);
                 doc.text('Prix Unitaire', itemLeft + 300, y);
                 doc.text('Total (€)', itemLeft + 380, y);
-                y += 8;
+                y += 10;
                 doc.setFont('helvetica', 'normal');
                 // Colonnes: Article, Qté, Prix unit., Total
                 doc.setFontSize(10);
@@ -712,13 +713,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // zebra pour items
                     if (((y - topStart) / lineHeight) % 2 < 1) {
                         doc.setFillColor(253, 253, 253);
-                        doc.rect(itemLeft - 6, y - 12, 440, lineHeight, 'F');
+                        doc.rect(itemLeft - 6, y - (lineHeight - 6), 440, lineHeight + 2, 'F');
                     }
                     doc.text(itName, itemLeft, y);
                     doc.text(String(qty), itemLeft + 250, y);
                     doc.text(`€${unit.toFixed(2)}`, itemLeft + 300, y);
                     doc.text(`€${lineTotal}`, itemLeft + 380, y);
                     y += lineHeight;
+                    y += 1;
                 });
                 doc.setFontSize(11);
                 // Sous-total de la commande
@@ -727,7 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 doc.setFont('helvetica', 'bold');
                 doc.text(`Sous-total commande: €${orderTotal.toFixed(2)}`, itemLeft, y);
                 doc.setFont('helvetica', 'normal');
-                y += 12;
+                y += 14;
             }
         });
 
@@ -757,27 +759,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (y + 40 > pageHeight - 40) { doc.addPage(); y = topStart; }
             y += 24;
             doc.setFillColor(235, 239, 242);
-            doc.rect(left - 6, y - 10, 520, 20, 'F');
+            doc.rect(left - 6, y - 12, 520, 24, 'F');
             doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
             doc.text('Récapitulatif global par article', left, y);
-            y += 16;
+            y += 18;
             doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
             doc.text('Article', left, y);
             doc.text('Quantité', left + 250, y);
             doc.text('Montant (€)', left + 380, y);
-            y += 8;
+            y += 10;
             doc.setFont('helvetica', 'normal');
             const rows = Array.from(aggregate.entries()).sort((a,b) => String(a[0]).localeCompare(String(b[0])));
             rows.forEach(([name, data]) => {
                 if (y + lineHeight > pageHeight - 40) { doc.addPage(); y = topStart; }
                 if (((y - topStart) / lineHeight) % 2 < 1) {
                     doc.setFillColor(253, 253, 253);
-                    doc.rect(left - 6, y - 12, 520, lineHeight, 'F');
+                    doc.rect(left - 6, y - (lineHeight - 6), 520, lineHeight + 2, 'F');
                 }
                 doc.text(String(name), left, y);
                 doc.text(String(data.qty), left + 250, y);
                 doc.text(`€${data.amount.toFixed(2)}`, left + 380, y);
                 y += lineHeight;
+                y += 2;
             });
         }
 
