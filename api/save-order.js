@@ -25,17 +25,14 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const { name, email, phone, date, seasonId, seasonName, renouveler, items, userId } = req.body;
+        const { name, email, phone, date, seasonId, seasonName, items, userId } = req.body;
         
         // Vérification minimale des données
         if (!name || !email || (!date && !seasonId) || !items || items.length === 0) {
             return res.status(400).json({ message: 'Données de commande incomplètes.' });
         }
 
-        // Normaliser certains champs
-        const normRenouveler = typeof renouveler === 'string'
-            ? renouveler.toString().trim().toLowerCase()
-            : (renouveler === true ? 'oui' : (renouveler === false ? 'non' : 'non'));
+        // Champ supprimé définitivement
 
         const orderData = {
             name: (name || '').toString().trim(),
@@ -44,7 +41,7 @@ module.exports = async (req, res) => {
             date: (date || '').toString().trim(), // Date de retrait/livraison souhaitée
             seasonId: seasonId || null, // ID de la saison
             seasonName: seasonName || null, // Nom de la saison
-            renouveler: normRenouveler === 'oui' ? 'oui' : 'non',
+            // champ retiré
             items: items.map(item => ({
                 name: item.name,
                 quantity: item.quantity

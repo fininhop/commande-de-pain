@@ -178,8 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     aVal = (a.name || '').toLowerCase();
                     bVal = (b.name || '').toLowerCase();
                     return aVal.localeCompare(bVal);
-                case 'renouveler':
-                    return 0;
+                // ancien case retiré
                 case 'season':
                     aVal = (a.seasonName || a.seasonId || '').toLowerCase();
                     bVal = (b.seasonName || b.seasonId || '').toLowerCase();
@@ -560,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Bouton de nettoyage 'renouveler' supprimé
+    // Nettoyage associé à l'ancien champ supprimé
 
     // Sauvegarder (créer/mettre à jour) une saison
     if (saveSeasonBtn && seasonModal) {

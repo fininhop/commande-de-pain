@@ -38,11 +38,8 @@ module.exports = async (req, res) => {
         const forbidden = ['userId'];
         forbidden.forEach(f => delete updates[f]);
 
-        // Normaliser 'renouveler' si fourni
-        if (typeof updates.renouveler !== 'undefined') {
-            const r = (updates.renouveler || '').toString().trim().toLowerCase();
-            updates.renouveler = r === 'oui' ? 'oui' : (r === 'non' ? 'non' : 'non');
-        }
+        // Champ retiré: ignorer toute tentative de mise à jour
+        // Champ retiré côté création; ignorer silencieusement si présent dans updates
         if (typeof updates.date !== 'undefined') {
             updates.date = (updates.date || '').toString().trim();
         }

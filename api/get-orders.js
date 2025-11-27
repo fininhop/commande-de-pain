@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
                 email: data.email || 'N/A',
                 phone: data.phone || 'N/A',
                 date: data.date, // Date de retrait
-                renouveler: data.renouveler, 
+                // champ supprimé
                 items: data.items,
                 createdAt: createdAt,
             };

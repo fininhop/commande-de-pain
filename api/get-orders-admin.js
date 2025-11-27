@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
             const data = doc.data();
             const timeField = data.timestamp || data.createdAt;
             const createdAt = timeField ? (timeField.toDate ? timeField.toDate().toISOString() : new Date(timeField).toISOString()) : null;
-            const rn = (data.renouveler == null ? '' : String(data.renouveler)).trim().toLowerCase();
+            // Champ supprimé
             return {
                 id: doc.id,
                 name: data.name || 'N/A',
@@ -44,7 +44,7 @@ module.exports = async (req, res) => {
                 date: data.date,
                 seasonId: data.seasonId || null,
                 seasonName: data.seasonName || null,
-                renouveler: rn === 'oui' ? 'oui' : (rn === 'non' ? 'non' : 'non'),
+                // champ retiré
                 items: data.items,
                 createdAt
             };
