@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!orderId || !modal) return;
                 editOrderId.value = orderId;
                 editDate.value = (date || '');
-                editRen.value = (rn === 'oui' || rn === 'non') ? rn : '';
+                    editRen.value = '';
                 modal.show();
             });
         });
