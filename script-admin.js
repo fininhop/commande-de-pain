@@ -809,7 +809,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sorted = [...list].sort((a,b)=> String(a.name||'').localeCompare(String(b.name||'')));
         let grandTotalPrice = 0, grandTotalWeight = 0;
         const sections = [];
-        const recap = {}; // { label: { qty: number, unitPrice: number|0, unitWeight: number|0, name:string } }
+        const recap = {}; // { name: { qty: number } } (boulanger: uniquement quantité par type de pain)
         sorted.forEach(o => {
             let subTotalPrice = 0, subTotalWeight = 0;
             const body = [[
@@ -841,14 +841,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 subTotalPrice += linePrice;
                 subTotalWeight += lineWeight;
                 // Récap global pour fournées
-                const baseName = String(it.name||'').trim();
-                const weightLabel = wkg ? `${wkg.toFixed(3)} kg` : '';
-                const key = weightLabel ? `${baseName} ${weightLabel}` : baseName;
-                if(!recap[key]) recap[key] = { qty:0, unitPrice: unit || 0, unitWeight: wkg || 0, name: baseName };
+                const key = String(it.name||'').trim();
+                if(!recap[key]) recap[key] = { qty:0 };
                 recap[key].qty += qty;
-                // Mettre à jour infos si manquantes (garder premier non nul)
-                if(!recap[key].unitPrice && unit) recap[key].unitPrice = unit;
-                if(!recap[key].unitWeight && wkg) recap[key].unitWeight = wkg;
                 body.push([
                     it.name || '',
                     String(qty),
@@ -869,27 +864,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ]
             });
         });
-        // Construire tableau récapitulatif pour le boulanger
-        const recapRows = [[
-            { text: 'Produit', bold: true },
-            { text: 'Quantité Totale', bold: true },
-            { text: 'Poids total (kg)', bold: true },
-            { text: 'Montant total (€)', bold: true }
-        ]];
-        Object.keys(recap)
-            .sort((a,b)=> a.localeCompare(b,'fr',{sensitivity:'base'}))
-            .forEach(label => {
-                const r = recap[label];
-                const totalWeight = (r.unitWeight || 0) * r.qty;
-                const totalPrice = (r.unitPrice || 0) * r.qty;
-                recapRows.push([
-                    label,
-                    String(r.qty),
-                    totalWeight ? totalWeight.toFixed(3) : '0.000',
-                    totalPrice ? `€${totalPrice.toFixed(2)}` : '€0.00'
-                ]);
-            });
-        // Liste compacte "N x Pain type poids"
+        // Liste compacte "N x TYPE DE PAIN"
         const recapList = Object.keys(recap)
             .sort((a,b)=> a.localeCompare(b,'fr',{sensitivity:'base'}))
             .map(label => {
@@ -900,7 +875,6 @@ document.addEventListener('DOMContentLoaded', () => {
             margin:[0,20,0,0],
             stack:[
                 { text: 'Récapitulatif Fournée (Boulanger)', style:'totals' },
-                { table: { headerRows:1, widths:['*','auto','auto','auto'], body: recapRows } },
                 { text: recapList.join('\n'), margin:[0,8,0,0] }
             ]
         };
