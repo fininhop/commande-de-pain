@@ -285,20 +285,15 @@ document.addEventListener('DOMContentLoaded', () => {
             for (const k of Object.keys(map)) { if (normalizeKey(k) === nk) return map[k]; }
             return undefined;
         }
-        Object.keys(PRICES).forEach(productId => {
-            const input = document.getElementById(productId);
-            if (input) {
-                const quantity = parseInt(input.value) || 0;
-                if (quantity > 0) {
-                    const unitWeight = Number(resolveMap(NAME_WEIGHTS, PRODUCT_NAMES[productId]) || 0);
-                    items.push({ 
-                        name: PRODUCT_NAMES[productId], 
-                        quantity: quantity, 
-                        price: PRICES[productId], // Ajout du prix
-                        unitWeight: unitWeight // Poids unitaire en kg si connu
-                    });
-                    hasProducts = true;
-                }
+        document.querySelectorAll('#productGrid input[type="number"]').forEach(input => {
+            const quantity = parseInt(input.value) || 0;
+            if (quantity > 0) {
+                const name = input.getAttribute('data-name');
+                const price = Number(input.getAttribute('data-price')) || 0;
+                let unitWeight = Number(input.getAttribute('data-unitweight')) || 0;
+                if (!unitWeight) unitWeight = Number(resolveMap(NAME_WEIGHTS, name) || 0);
+                items.push({ name, quantity, price, unitWeight });
+                hasProducts = true;
             }
         });
 
