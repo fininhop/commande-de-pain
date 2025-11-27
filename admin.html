@@ -103,56 +103,153 @@
 
             <div id="adminMessage" class="mb-3"></div>
 
-            <!-- Section des commandes -->
-            <div class="mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">📦 Commandes</h4>
-                    <div class="d-flex gap-2 align-items-center">
-                        <span class="text-muted small">Filtrer par saison:</span>
-                        <select id="seasonFilter" class="form-select form-select-sm" style="width: auto;">
-                            <option value="all">Toutes les saisons</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <!-- Statistiques de saison -->
-                <div id="seasonStats" class="alert alert-info mb-3" style="display: none;">
-                    <h6 class="alert-heading">📊 Statistiques de saison</h6>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <strong>Total commandes:</strong> <span id="seasonOrderCount">0</span>
-                        </div>
-                        <div class="col-md-4">
-                            <strong>Total prix:</strong> <span id="seasonTotalPrice">€0.00</span>
-                        </div>
-                        <div class="col-md-4">
-                            <strong>Moyenne par commande:</strong> <span id="seasonAveragePrice">€0.00</span>
+            <!-- Accordion container -->
+            <div class="accordion" id="adminAccordion">
+                <!-- Commandes -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOrders">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOrders" aria-expanded="true" aria-controls="collapseOrders">
+                            📦 Commandes
+                        </button>
+                    </h2>
+                    <div id="collapseOrders" class="accordion-collapse collapse show" aria-labelledby="headingOrders" data-bs-parent="#adminAccordion">
+                        <div class="accordion-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0">📦 Commandes</h4>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <span class="text-muted small">Filtrer par saison:</span>
+                                    <select id="seasonFilter" class="form-select form-select-sm" style="width: auto;">
+                                        <option value="all">Toutes les saisons</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- Statistiques de saison -->
+                            <div id="seasonStats" class="alert alert-info mb-3" style="display: none;">
+                                <h6 class="alert-heading">📊 Statistiques de saison</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>Total commandes:</strong> <span id="seasonOrderCount">0</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Total prix:</strong> <span id="seasonTotalPrice">€0.00</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Moyenne par commande:</strong> <span id="seasonAveragePrice">€0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Statistiques de toutes les saisons -->
+                            <div id="allSeasonsStats" class="card card-body mb-3">
+                                <h6 class="mb-2">📈 Statistiques de toutes les saisons</h6>
+                                <div id="allSeasonsStatsBody" class="table-responsive small">
+                                    <table class="table table-sm">
+                                        <thead><tr><th>Saison</th><th>Cmd</th><th>Total (€)</th><th>Moyenne (€)</th></tr></thead>
+                                        <tbody></tbody>
+                                        <tfoot><tr><th>Total</th><th id="allSeasonsTotalCount">0</th><th id="allSeasonsTotalPrice">€0.00</th><th id="allSeasonsAvgPrice">€0.00</th></tr></tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                            <div id="ordersContainer" class="row g-3"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Statistiques de toutes les saisons -->
-                <div id="allSeasonsStats" class="card card-body mb-3">
-                    <h6 class="mb-2">📈 Statistiques de toutes les saisons</h6>
-                    <div id="allSeasonsStatsBody" class="table-responsive small">
-                        <table class="table table-sm">
-                            <thead><tr><th>Saison</th><th>Cmd</th><th>Total (€)</th><th>Moyenne (€)</th></tr></thead>
-                            <tbody></tbody>
-                            <tfoot><tr><th>Total</th><th id="allSeasonsTotalCount">0</th><th id="allSeasonsTotalPrice">€0.00</th><th id="allSeasonsAvgPrice">€0.00</th></tr></tfoot>
-                        </table>
+                <!-- Gestion des Saisons -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingSeasons">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeasons" aria-expanded="false" aria-controls="collapseSeasons">
+                            🌸 Gestion des Saisons
+                        </button>
+                    </h2>
+                    <div id="collapseSeasons" class="accordion-collapse collapse" aria-labelledby="headingSeasons" data-bs-parent="#adminAccordion">
+                        <div class="accordion-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0">🌸 Gestion des Saisons</h4>
+                                <button id="newSeasonBtn" class="btn btn-sm btn-primary">➕ Nouvelle saison</button>
+                            </div>
+                            <div id="seasonsContainer" class="row g-3"></div>
+                        </div>
                     </div>
                 </div>
-                
-                <div id="ordersContainer" class="row g-3"></div>
-            </div>
 
-            <!-- Section des saisons -->
-            <div class="mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">🌸 Gestion des Saisons</h4>
-                    <button id="newSeasonBtn" class="btn btn-sm btn-primary">➕ Nouvelle saison</button>
+                <!-- Administrer utilisateurs -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingUsers">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUsers" aria-expanded="false" aria-controls="collapseUsers">
+                            👥 Administrer utilisateurs
+                        </button>
+                    </h2>
+                    <div id="collapseUsers" class="accordion-collapse collapse" aria-labelledby="headingUsers" data-bs-parent="#adminAccordion">
+                        <div class="accordion-body">
+                            <div class="card card-body mb-3">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Rechercher par email</label>
+                                        <input type="email" id="adminUserEmail" class="form-control" placeholder="ex: jean@exemple.com" />
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <button id="adminUserSearch" class="btn btn-primary w-100">🔍 Rechercher</button>
+                                    </div>
+                                </div>
+                                <div class="mt-3 small text-muted">Conseil: sur smartphone, utilisez les boutons rapides pour appeler ou envoyer un SMS.</div>
+                            </div>
+                            <div id="adminUserResult" class="card card-body d-none"></div>
+                            <script>
+                                (function(){
+                                    function isMobile(){ return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); }
+                                    const emailInput = document.getElementById('adminUserEmail');
+                                    const btn = document.getElementById('adminUserSearch');
+                                    const result = document.getElementById('adminUserResult');
+                                    async function fetchUserByEmail(email){
+                                        try {
+                                            const resp = await fetch('/api/find-user?email=' + encodeURIComponent(email));
+                                            const jr = await resp.json().catch(() => null);
+                                            if (!resp.ok) {
+                                                return { error: (jr && jr.message) ? jr.message : 'Utilisateur non trouvé'};
+                                            }
+                                            return { userId: jr.userId, user: jr.user };
+                                        } catch(e){ return { error: 'Erreur réseau' }; }
+                                    }
+                                    function renderActions(email, user){
+                                        const mailto = 'mailto:' + encodeURIComponent(email);
+                                        const tel = (user && user.phone) ? String(user.phone) : '';
+                                        const name = (user && user.name) ? user.name : (email.split('@')[0]);
+                                        const callHref = tel ? ('tel:' + tel) : null;
+                                        const smsHref = tel ? ('sms:' + tel) : null;
+                                        let actions = '<a class="btn btn-outline-primary me-2" href="'+mailto+'">✉️ Envoyer un mail</a>';
+                                        if (isMobile()) {
+                                            actions += callHref ? '<a class="btn btn-outline-success me-2" href="'+callHref+'">📞 Appeler</a>' : '';
+                                            actions += smsHref ? '<a class="btn btn-outline-warning" href="'+smsHref+'">📲 SMS</a>' : '';
+                                            if (!callHref || !smsHref) actions += '<div class="mt-2 text-muted">Astuce: ajoutez le téléphone de l\'utilisateur dans la base pour activer Appel/SMS.</div>';
+                                        }
+                                        const phoneInfo = tel ? ('<div class="mt-1">📞 ' + tel + '</div>') : '';
+                                        result.classList.remove('d-none');
+                                        result.innerHTML = '<div><strong>'+name+'</strong> &lt;'+email+'&gt;</div>'+phoneInfo+'<div class="mt-2">'+actions+'</div>';
+                                    }
+                                    if (btn) {
+                                        btn.addEventListener('click', async function(){
+                                            const email = (emailInput && emailInput.value || '').trim();
+                                            if (!email) { alert('Veuillez saisir un email'); return; }
+                                            result.classList.remove('d-none');
+                                            result.innerHTML = '<div class="text-muted">Recherche…</div>';
+                                            const r = await fetchUserByEmail(email);
+                                            if (r && r.error){
+                                                result.innerHTML = '<div class="alert alert-warning">'+r.error+'</div>';
+                                                return;
+                                            }
+                                            renderActions(email, r.user);
+                                        });
+                                    }
+                                    // Refresh support: if already email filled, re-run on reload
+                                    window.addEventListener('load', function(){
+                                        const email = (emailInput && emailInput.value || '').trim();
+                                        if (email) { btn && btn.click(); }
+                                    });
+                                })();
+                            </script>
+                        </div>
+                    </div>
                 </div>
-                <div id="seasonsContainer" class="row g-3"></div>
             </div>
         </div>
     </div>
