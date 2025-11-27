@@ -717,6 +717,44 @@ document.addEventListener('DOMContentLoaded', () => {
         doc.setFont('helvetica', 'bold');
         doc.text(`Total général: €${totalSum.toFixed(2)}`, left, y);
 
+        // Récapitulatif global par type de pain (quantités et montants)
+        const aggregate = new Map();
+        list.forEach(o => {
+            const items = Array.isArray(o.items) ? o.items : [];
+            items.forEach(it => {
+                const name = String(it.name || '—');
+                const qty = Number(it.quantity || 0);
+                const unit = (typeof it.price === 'number') ? it.price : (NAME_PRICES[name] || 0);
+                const prev = aggregate.get(name) || { qty: 0, amount: 0 };
+                prev.qty += qty;
+                prev.amount += qty * unit;
+                aggregate.set(name, prev);
+            });
+        });
+
+        // Section recap en fin de document
+        if (aggregate.size) {
+            if (y + 40 > pageHeight - 40) { doc.addPage(); y = topStart; }
+            y += 24;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+            doc.text('Récapitulatif global par article', left, y);
+            y += 16;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+            doc.text('Article', left, y);
+            doc.text('Quantité', left + 250, y);
+            doc.text('Montant (€)', left + 380, y);
+            y += 10; doc.setLineWidth(0.3); doc.line(left, y, left + 520, y);
+            doc.setFont('helvetica', 'normal');
+            const rows = Array.from(aggregate.entries()).sort((a,b) => String(a[0]).localeCompare(String(b[0])));
+            rows.forEach(([name, data]) => {
+                if (y + lineHeight > pageHeight - 40) { doc.addPage(); y = topStart; }
+                doc.text(String(name), left, y);
+                doc.text(String(data.qty), left + 250, y);
+                doc.text(`€${data.amount.toFixed(2)}`, left + 380, y);
+                y += lineHeight - 2;
+            });
+        }
+
         const filename = `commandes_${seasonName.replace(/\s+/g,'_')}.pdf`;
         doc.save(filename);
     }
