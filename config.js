@@ -6,10 +6,26 @@ const firebaseConfig = {
 };
 
 // Prix unitaires par nom d'article (modifiable)
+// Prix unitaires par nom d'article (modifiable)
 window.NAME_PRICES = window.NAME_PRICES || {
+    // Format générique
     "Pain 1kg": 4.50,
     "Pain 500g": 2.50,
-    "Baguette": 1.20
+    "Baguette": 1.20,
+    // Formats détaillés (ancien mapping admin)
+    'Blanc 400g': 3.60,
+    'Blanc 800g': 6.50,
+    'Blanc 1kg': 7.00,
+    'Complet 400g': 3.60,
+    'Complet 800g': 6.50,
+    'Complet 1kg': 7.00,
+    'Céréale 400g': 4.60,
+    'Céréale 800g': 8.50,
+    'Céréale 1kg': 9.00,
+    'Épeautre 400g': 4.60,
+    'Épeautre 800g': 8.50,
+    'Épeautre 1kg': 9.00,
+    'Sarrazin': 7.00
 };
 
 // Poids unitaires par nom d'article en kg (optionnel)

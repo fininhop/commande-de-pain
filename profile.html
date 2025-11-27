@@ -31,6 +31,30 @@
         </form>
       </div>
     </div>
+    <div class="card mt-4">
+      <div class="card-body">
+        <h2 class="h6 mb-3">Changer mon mot de passe</h2>
+        <form id="passwordForm" class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Mot de passe actuel *</label>
+            <input type="password" id="currentPassword" class="form-control" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Nouveau mot de passe *</label>
+            <input type="password" id="newPassword" class="form-control" required />
+            <div class="form-text" id="pwdStrengthText"></div>
+          </div>
+            <div class="col-md-4">
+            <label class="form-label">Confirmer le nouveau mot de passe *</label>
+            <input type="password" id="confirmNewPassword" class="form-control" required />
+          </div>
+          <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary">Changer le mot de passe</button>
+          </div>
+        </form>
+        <div id="passwordFeedback" class="mt-2 small"></div>
+      </div>
+    </div>
     <div id="profileToast" class="mt-3"></div>
   </div>
   <script src="config.js"></script>
