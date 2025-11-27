@@ -53,6 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const seasonEndInput = document.getElementById('seasonEnd');
     const seasonDescInput = document.getElementById('seasonDescription');
 
+    // Utilisateurs (Administrer utilisateurs)
+    const adminUsersList = document.getElementById('adminUsersList');
+    const adminUserSearchQuery = document.getElementById('adminUserSearchQuery');
+    const adminUsersReload = document.getElementById('adminUsersReload');
+    let allUsers = [];
+
     function showMessage(text, type='') {
         adminMessage.innerHTML = text ? `<div class="text-${type}">${text}</div>` : '';
     }
@@ -488,6 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
         adminArea.classList.remove('d-none');
         fetchAdminOrders(storedToken);
         fetchSeasons(storedToken);
+        fetchUsers();
     }
 
     adminForm.addEventListener('submit', async (e) => {
@@ -501,6 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
         adminArea.classList.remove('d-none');
         try {
             await Promise.all([fetchAdminOrders(token), fetchSeasons(token)]);
+            await fetchUsers();
         } finally {
             enableForm(adminForm);
             hidePageLoader();
@@ -513,6 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showPageLoader('Actualisation des données…');
         try {
             await Promise.all([fetchAdminOrders(t), fetchSeasons(t)]);
+            await fetchUsers();
         } finally {
             hidePageLoader();
         }
@@ -597,5 +606,76 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = document.getElementById('seasonModalLabel');
         if (title) title.textContent = season ? 'Éditer la saison' : 'Nouvelle saison';
         seasonModal.show();
+    }
+
+    // Chargement et rendu des utilisateurs
+    async function fetchUsers() {
+        try {
+            const resp = await fetch('/api/get-users');
+            const jr = await resp.json().catch(() => null);
+            if (!resp.ok) {
+                console.error('Erreur get-users:', jr && jr.message);
+                renderUsers([]);
+                return;
+            }
+            allUsers = (jr && jr.users) ? jr.users : [];
+            renderUsers(allUsers);
+        } catch (e) {
+            console.error('Erreur réseau get-users:', e);
+            renderUsers([]);
+        }
+    }
+
+    function normalize(str) { return String(str || '').toLowerCase(); }
+
+    function userMatchesQuery(user, q) {
+        const nq = normalize(q);
+        if (!nq) return true;
+        const fields = [user.name, user.email, user.phone];
+        return fields.some(f => normalize(f).includes(nq));
+    }
+
+    function renderUsers(list) {
+        if (!adminUsersList) return;
+        const q = adminUserSearchQuery ? adminUserSearchQuery.value : '';
+        const filtered = list.filter(u => userMatchesQuery(u, q));
+        if (filtered.length === 0) {
+            adminUsersList.innerHTML = '<div class="alert alert-info">Aucun utilisateur</div>';
+            return;
+        }
+        const items = filtered.map(u => {
+            const name = u.name || (u.email ? u.email.split('@')[0] : '—');
+            const email = u.email || '—';
+            const phone = u.phone || '';
+            const details = `<div class="mt-2 small"><div>📧 ${email}</div>${phone ? `<div>📞 ${phone}</div>` : ''}</div>`;
+            return `<a href="#" class="list-group-item list-group-item-action" data-user-id="${u.id}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div><strong>${name}</strong></div>
+                            <span class="badge bg-secondary">Cliquer pour détails</span>
+                        </div>
+                        <div class="user-details d-none">${details}</div>
+                    </a>`;
+        }).join('');
+        adminUsersList.innerHTML = items;
+        // Toggle details on click
+        adminUsersList.querySelectorAll('.list-group-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const details = item.querySelector('.user-details');
+                if (details) details.classList.toggle('d-none');
+            });
+        });
+    }
+
+    if (adminUserSearchQuery) {
+        adminUserSearchQuery.addEventListener('input', () => {
+            renderUsers(allUsers);
+        });
+    }
+    if (adminUsersReload) {
+        adminUsersReload.addEventListener('click', async () => {
+            showPageLoader('Chargement des utilisateurs…');
+            try { await fetchUsers(); } finally { hidePageLoader(); }
+        });
     }
 });
