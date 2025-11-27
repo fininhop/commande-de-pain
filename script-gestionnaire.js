@@ -1,7 +1,10 @@
 // script-gestionnaire.js - Gestionnaire admin protégé avec tri
 
 let allOrders = [];
+let filteredOrders = [];
 let currentSort = { field: 'createdAt', direction: 'desc' };
+let seasons = [];
+let selectedSeason = '';
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginScreen = document.getElementById('adminLoginScreen');
@@ -13,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshBtn = document.getElementById('refreshBtn');
     const adminMessage = document.getElementById('adminMessage');
     const ordersTableContainer = document.getElementById('ordersTableContainer');
+    const seasonFilterEl = document.getElementById('seasonFilter');
+    const tabsEl = document.getElementById('gestionTabs');
 
     function showMessage(text, type = '') {
         adminMessage.innerHTML = text ? `<span class="text-${type}">${text}</span>` : '';
@@ -30,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentSort.field = field;
             currentSort.direction = 'asc';
         }
-        allOrders.sort((a, b) => {
+        filteredOrders.sort((a, b) => {
             let valA = a[field] || '';
             let valB = b[field] || '';
             if (field === 'createdAt') {
@@ -45,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderOrders() {
-        if (!allOrders || !allOrders.length) {
+        if (!filteredOrders || !filteredOrders.length) {
             ordersTableContainer.innerHTML = '<div class="alert alert-info">Aucune commande trouvée.</div>';
             return;
         }
@@ -67,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         html += '<th>🛍️ Articles</th><th>⚙️ Actions</th></tr></thead><tbody>';
 
-        allOrders.forEach(o => {
+        filteredOrders.forEach(o => {
             const items = (o.items || []).map(it => `${it.quantity}× ${it.name}`).join(', ');
             const rn = (o.renouveler || '').toString().trim().toLowerCase();
             const dateFormatted = o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR') : '—';
@@ -120,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         showMessage('Commande supprimée', 'success');
                         tr.remove();
                         allOrders = allOrders.filter(o => o.id !== orderId);
+                        applySeasonFilter();
                     } else {
                         showMessage('Erreur suppression: ' + (jr && jr.message ? jr.message : resp.statusText), 'danger');
                     }
@@ -187,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             allOrders = result.orders || [];
+            applySeasonFilter();
             sortOrders(currentSort.field);
             showMessage(`${allOrders.length} commande(s) chargée(s)`, 'success');
         } catch (err) {
@@ -195,11 +202,65 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function fetchSeasons() {
+        try {
+            const resp = await fetch('/api/seasons');
+            const jr = await resp.json().catch(() => []);
+            seasons = Array.isArray(jr) ? jr : (jr.seasons || []);
+            // sort by name desc as a proxy for most recent
+            seasons.sort((a,b) => (b.name||'').localeCompare(a.name||''));
+            // populate filter
+            if (seasonFilterEl) {
+                seasonFilterEl.innerHTML = '<option value="">Toutes</option>' +
+                    seasons.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                // default to most recent (first after sort)
+                if (seasons.length) {
+                    selectedSeason = seasons[0].name || '';
+                    seasonFilterEl.value = selectedSeason;
+                }
+                seasonFilterEl.addEventListener('change', () => {
+                    selectedSeason = seasonFilterEl.value;
+                    applySeasonFilter();
+                    sortOrders(currentSort.field);
+                });
+            }
+            applySeasonFilter();
+            sortOrders(currentSort.field);
+            // render seasons list placeholder
+            const seasonsList = document.getElementById('seasonsList');
+            if (seasonsList) {
+                seasonsList.innerHTML = seasons.map(s => `<span class="badge bg-light text-dark me-1">${s.name}</span>`).join('') || '<span class="text-muted">Aucune saison</span>';
+            }
+        } catch (e) {
+            console.error('fetchSeasons error', e);
+        }
+    }
+
+    function applySeasonFilter() {
+        filteredOrders = selectedSeason ? (allOrders || []).filter(o => (o.season||'') === selectedSeason) : (allOrders || []);
+    }
+
+    function setupTabs() {
+        if (!tabsEl) return;
+        tabsEl.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                tabsEl.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                const target = link.getAttribute('data-target');
+                document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+                const el = document.querySelector(target);
+                if (el) el.classList.add('active');
+            });
+        });
+    }
+
     // Auto-login si token stocké
+    setupTabs();
     const storedToken = localStorage.getItem('adminToken');
     if (storedToken) {
         loginScreen.classList.add('d-none');
         adminArea.classList.remove('d-none');
+        fetchSeasons();
         fetchAdminOrders(storedToken);
     }
 
@@ -217,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('adminToken', token);
                 loginScreen.classList.add('d-none');
                 adminArea.classList.remove('d-none');
+                fetchSeasons();
                 fetchAdminOrders(token);
             } else {
                 showLoginError('Token incorrect ou accès refusé');
@@ -238,6 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
         loginScreen.classList.remove('d-none');
         ordersTableContainer.innerHTML = '';
         allOrders = [];
+        filteredOrders = [];
+        seasons = [];
+        selectedSeason = '';
         showMessage('');
     });
 });
