@@ -83,7 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const nameInput = document.getElementById('regName');
     const emailInput = document.getElementById('regEmail');
     const phoneInput = document.getElementById('regPhone');
-    const addressInput = document.getElementById('regAddress');
+    const addrLine1 = document.getElementById('regAddrLine1');
+    const addrLine2 = document.getElementById('regAddrLine2');
+    const addrPostal = document.getElementById('regPostal');
+    const addrCity = document.getElementById('regCity');
+    const addrDept = document.getElementById('regDept');
     const passwordInput = document.getElementById('regPassword');
     const confirmInput = document.getElementById('regConfirmPassword');
     const msg = document.getElementById('regMessage');
@@ -104,9 +108,17 @@ document.addEventListener('DOMContentLoaded', () => {
         showError('regPhone', 'phoneError', error);
     });
 
-    addressInput.addEventListener('blur', () => {
-        const error = validateAddress(addressInput.value);
-        showError('regAddress', 'addressError', error);
+    addrLine1.addEventListener('blur', () => {
+        const error = validateAddress(addrLine1.value);
+        showError('regAddrLine1', 'addressError', error);
+    });
+    addrPostal.addEventListener('blur', () => {
+        const ok = /^\d{5}$/.test((addrPostal.value||'').trim());
+        showError('regPostal', 'addressError', ok ? null : 'Code postal à 5 chiffres requis');
+    });
+    addrCity.addEventListener('blur', () => {
+        const ok = (addrCity.value||'').trim().length >= 2;
+        showError('regCity', 'addressError', ok ? null : 'Ville requise');
     });
 
     passwordInput.addEventListener('input', () => {
@@ -134,7 +146,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = nameInput.value.trim();
         const email = emailInput.value.trim().toLowerCase();
         const phone = phoneInput.value.replace(/[\s-]/g, '');
-        const address = addressInput.value.trim();
+        const address = {
+            line1: (addrLine1.value||'').trim(),
+            line2: (addrLine2.value||'').trim(),
+            postalCode: (addrPostal.value||'').trim(),
+            city: (addrCity.value||'').trim(),
+            department: (addrDept.value||'').trim()
+        };
         const password = passwordInput.value;
         const confirm = confirmInput.value;
 
@@ -142,18 +160,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const nameErr = validateName(name);
         const emailErr = validateEmail(email);
         const phoneErr = validatePhone(phone);
-        const addressErr = validateAddress(address);
+        const addressErr = validateAddress(address.line1);
         const passwordErr = validatePassword(password);
         const confirmErr = validatePasswordMatch(password, confirm);
 
         showError('regName', 'nameError', nameErr);
         showError('regEmail', 'emailError', emailErr);
         showError('regPhone', 'phoneError', phoneErr);
-        showError('regAddress', 'addressError', addressErr);
+        showError('regAddrLine1', 'addressError', addressErr);
+        const postalErr = /^\d{5}$/.test(address.postalCode) ? null : 'Code postal à 5 chiffres requis';
+        showError('regPostal', 'addressError', postalErr);
+        const cityErr = address.city.length >= 2 ? null : 'Ville requise';
+        showError('regCity', 'addressError', cityErr);
         showError('regPassword', 'passwordError', passwordErr);
         showError('regConfirmPassword', 'confirmError', confirmErr);
 
-        if (nameErr || emailErr || phoneErr || addressErr || passwordErr || confirmErr) {
+        if (nameErr || emailErr || phoneErr || addressErr || postalErr || cityErr || passwordErr || confirmErr) {
             return;
         }
 

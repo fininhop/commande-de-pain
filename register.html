@@ -50,7 +50,23 @@
                     </div>
                     <div class="mb-2">
                         <label class="form-label">Adresse *</label>
-                        <input id="regAddress" class="form-control" required minlength="5" />
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <input id="regAddrLine1" class="form-control" placeholder="N° et voie (ex: 12 Rue de la Paix)" required minlength="5" />
+                            </div>
+                            <div class="col-12">
+                                <input id="regAddrLine2" class="form-control" placeholder="Bâtiment, escalier, étage, appartement (optionnel)" />
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <input id="regPostal" class="form-control" inputmode="numeric" pattern="\d{5}" placeholder="Code postal (ex: 75001)" required />
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <input id="regCity" class="form-control" placeholder="Ville (ex: Paris)" required />
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <input id="regDept" class="form-control" placeholder="Département (ex: 75)" />
+                            </div>
+                        </div>
                         <div class="error-text" id="addressError"></div>
                     </div>
 
