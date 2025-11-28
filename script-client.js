@@ -185,10 +185,10 @@ function renderClientProducts(products){
         wrapper.className = 'col-12';
         wrapper.innerHTML = `
             <div class="product-section">
-                <div class="category-header d-flex justify-content-between align-items-center mb-2">
+                <div class="category-header d-flex justify-content-between align-items-center mb-2 collapsed" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false">
                     <div class="d-flex align-items-center gap-2">
-                        <button class="btn btn-sm btn-outline-secondary rounded-circle shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" data-role="toggle-arrow" style="width:36px;height:36px;line-height:1;">▼</button>
-                        <h5 class="mb-0 category-toggle fw-semibold" role="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" style="cursor:pointer;">${cat}</h5>
+                        <span class="arrow-indicator" data-role="toggle-arrow" style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid #ced4da;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.08);font-size:16px;">▼</span>
+                        <h5 class="mb-0 category-toggle fw-semibold" style="cursor:pointer;">${cat}</h5>
                     </div>
                 </div>
                 <div id="${collapseId}" class="collapse">
@@ -217,20 +217,29 @@ function renderClientProducts(products){
         });
         // Update arrow on collapse show/hide
         const collapseEl = wrapper.querySelector('#'+collapseId);
-        const toggleBtn = wrapper.querySelector('button[data-role="toggle-arrow"]');
-        const titleToggle = wrapper.querySelector('.category-toggle');
-        if (collapseEl && toggleBtn) {
-            collapseEl.addEventListener('show.bs.collapse', ()=>{ toggleBtn.textContent = '▲'; toggleBtn.setAttribute('aria-expanded','true'); if (titleToggle) titleToggle.setAttribute('aria-expanded','true'); });
-            collapseEl.addEventListener('hide.bs.collapse', ()=>{ toggleBtn.textContent = '▼'; toggleBtn.setAttribute('aria-expanded','false'); if (titleToggle) titleToggle.setAttribute('aria-expanded','false'); });
-        }
-        // Fallback JS toggle (in case data attributes fail) for title click
-        if (titleToggle && collapseEl) {
-            titleToggle.addEventListener('click', (e)=>{
-                e.preventDefault();
-                const isShown = collapseEl.classList.contains('show');
-                const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseEl);
-                if (isShown) { bsCollapse.hide(); } else { bsCollapse.show(); }
+        const headerEl = wrapper.querySelector('.category-header');
+        const arrowSpan = headerEl ? headerEl.querySelector('[data-role="toggle-arrow"]') : null;
+        if (collapseEl && headerEl) {
+            collapseEl.addEventListener('show.bs.collapse', ()=>{
+                headerEl.classList.remove('collapsed');
+                headerEl.setAttribute('aria-expanded','true');
+                if (arrowSpan) arrowSpan.textContent = '▲';
             });
+            collapseEl.addEventListener('hide.bs.collapse', ()=>{
+                headerEl.classList.add('collapsed');
+                headerEl.setAttribute('aria-expanded','false');
+                if (arrowSpan) arrowSpan.textContent = '▼';
+            });
+            // Fallback keyboard interaction
+            headerEl.addEventListener('keydown', (e)=>{
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const isShown = collapseEl.classList.contains('show');
+                    const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseEl);
+                    if (isShown) bsCollapse.hide(); else bsCollapse.show();
+                }
+            });
+            // Ensure click on entire header toggles (Bootstrap handles via data attributes).
         }
         productGrid.appendChild(wrapper);
     });
