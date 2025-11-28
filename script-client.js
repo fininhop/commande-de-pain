@@ -146,6 +146,7 @@ function setOrderingAvailability(enabled, message) {
             infoBanner.innerHTML = 'Aucun produit dans votre panier.';
         }
     }
+    try { if (window.updateOffcanvasSubmitState) window.updateOffcanvasSubmitState(); } catch(e){}
 }
 
 function renderClientProducts(products){
@@ -422,6 +423,7 @@ function updateTotal() {
         }
         offcanvasTotal.textContent = totalPrice.toFixed(2);
     }
+    try { if (window.updateOffcanvasSubmitState) window.updateOffcanvasSubmitState(); } catch(e){}
 }
 
 // Trouver l'input produit par id
@@ -618,6 +620,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!offcanvasSubmitBtn) return;
         offcanvasSubmitBtn.disabled = !offcanvasCanSubmit();
     }
+    // Expose globally for programmatic updates
+    window.updateOffcanvasSubmitState = updateOffcanvasSubmitState;
     if (offcanvasSubmitBtn){
         offcanvasSubmitBtn.addEventListener('click', (e)=>{
             e.preventDefault();
