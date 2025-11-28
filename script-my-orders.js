@@ -1,143 +1,127 @@
-// script-my-orders.js - Affiche les commandes du user connecté (lecture seule)
+// script-my-orders.js - Mes commandes avec annulation sous conditions
 
-// Toast notification function
 function showToast(title, message, type = 'info') {
     const toastEl = document.getElementById('liveToast');
     if (!toastEl) return;
-    
     const toastTitle = document.getElementById('toastTitle');
     const toastBody = document.getElementById('toastBody');
     const toastHeader = toastEl.querySelector('.toast-header');
-    
     toastTitle.textContent = title;
     toastBody.textContent = message;
-    
-    toastHeader.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info', 'text-white');
-    
-    if (type === 'success') {
-        toastHeader.classList.add('bg-success', 'text-white');
-    } else if (type === 'error' || type === 'danger') {
-        toastHeader.classList.add('bg-danger', 'text-white');
-    } else if (type === 'warning') {
-        toastHeader.classList.add('bg-warning');
-    } else {
-        toastHeader.classList.add('bg-info', 'text-white');
-    }
-    
+    toastHeader.classList.remove('bg-success','bg-danger','bg-warning','bg-info','text-white');
+    if (type === 'success') toastHeader.classList.add('bg-success','text-white');
+    else if (type === 'error' || type === 'danger') toastHeader.classList.add('bg-danger','text-white');
+    else if (type === 'warning') toastHeader.classList.add('bg-warning');
+    else toastHeader.classList.add('bg-info','text-white');
     const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
     toast.show();
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    let ORDERS_FP = '';
-    let AUTO_REFRESH_HANDLE = null;
-    function renderMyOrders(list) {
-        try { return JSON.stringify((list||[]).map(o=>({id:String(o.id||''),ca:String(o.createdAt||''),d:String(o.date||''),len:(o.items||[]).length})).sort((a,b)=>a.id.localeCompare(b.id))); } catch(e){ return ''; }
-    }
-    showPageLoader('Chargement des commandes…');
-    const container = document.getElementById('ordersList');
-    const logout = document.getElementById('logoutLink');
+let CURRENT_MY_ORDERS = [];
+let MY_ORDERS_FP = '';
+let AUTO_REFRESH_HANDLE = null;
 
-        const items = list.map(o => {
-            const endDateStr = o.date || o.seasonEndDate || '';
-            let canCancel = false;
-            let cancelInfo = '';
-            if (endDateStr) {
-                const now = new Date();
-                const end = new Date(endDateStr);
-                const diffMs = end.getTime() - now.getTime();
-                const diffHours = diffMs / (1000 * 60 * 60);
-                if (diffHours >= 48) {
-                    canCancel = true;
-                } else if (diffHours > 0) {
-                    cancelInfo = `Annulation impossible: moins de 48h avant la fin de la saison (${Math.floor(diffHours)}h restantes).`;
-                } else {
-                    cancelInfo = 'Annulation impossible: la saison est terminée.';
-                }
-            } else {
-                cancelInfo = 'Date de fin de saison inconnue.';
-            }
+function fingerprintOrders(list){
+    try { return JSON.stringify((list||[]).map(o=>({id:String(o.id||''),d:String(o.date||''),len:(o.items||[]).length})).sort((a,b)=>a.id.localeCompare(b.id))); } catch(e){ return ''; }
+}
+
+function canCancelOrder(order){
+    const endDateStr = order && (order.date || order.seasonEndDate);
+    if (!endDateStr) return { ok:false, info:'Date de fin de saison inconnue.' };
+    const now = new Date();
+    const end = new Date(endDateStr);
+    const diffHours = (end.getTime() - now.getTime()) / (1000*60*60);
+    if (diffHours >= 48) return { ok:true, info:'' };
+    if (diffHours > 0) return { ok:false, info:`Annulation impossible: moins de 48h avant la fin de la saison (${Math.floor(diffHours)}h restantes).` };
+    return { ok:false, info:'Annulation impossible: la saison est terminée.' };
+}
+
+async function fetchMyOrders(){
+    const stored = localStorage.getItem('currentUser');
     let currentUser = null;
     try { currentUser = stored ? JSON.parse(stored) : null; } catch(e) { currentUser = null; }
-
-    if (!currentUser) {
-        window.location.href = 'index.html';
-        return;
+    if (!currentUser) { window.location.href = 'index.html'; return; }
+    const r = await fetch('/api/get-orders-by-user', {
+        method:'POST', headers:{ 'Content-Type':'application/json' }, cache:'no-cache',
+        body: JSON.stringify({ userId: currentUser.userId || currentUser.id, email: currentUser.email })
+    });
+    const j = await r.json().catch(()=>({}));
+    if (!r.ok || !j || !j.orders) {
+        showToast('❌ Erreur', (j && j.message) ? j.message : 'Chargement des commandes impossible', 'error');
+        renderMyOrders([]); return;
     }
+    CURRENT_MY_ORDERS = j.orders || [];
+    MY_ORDERS_FP = fingerprintOrders(CURRENT_MY_ORDERS);
+    renderMyOrders(CURRENT_MY_ORDERS);
+}
 
-    if (logout) {
-        logout.addEventListener('click', (e) => { e.preventDefault(); localStorage.removeItem('currentUser'); window.location.href = 'index.html'; });
-    }
-
-                                ${canCancel ? `<button class="btn btn-sm btn-outline-danger" data-action="cancel" data-id="${o.id}">Annuler</button>` : `<span class="badge bg-secondary">Non annulable</span>`}
-        const response = await fetch('/api/get-orders-by-user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.userId, email: currentUser.email }),
-                        ${(!canCancel && cancelInfo) ? `<div class="mt-2 alert alert-warning py-2 mb-0">${cancelInfo}</div>` : ''}
-            cache: 'no-cache'
+function renderMyOrders(list){
+    const container = document.getElementById('myOrdersContainer');
+    if (!container) return;
+    if (!list || list.length === 0) { container.innerHTML = '<div class="alert alert-info">Vous n\'avez pas encore de commandes.</div>'; return; }
+    const html = list.map(o => {
+        const total = (o.items||[]).reduce((s,it)=> s + (Number(it.price||0) * Number(it.quantity||0)), 0);
+        const lines = (o.items||[]).map(it => `${it.quantity} × ${it.name} (€${Number(it.price||0).toFixed(2)})`).join('<br>');
+        const { ok, info } = canCancelOrder(o);
+        return `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-bold">${o.seasonName || o.seasonId || ''}</div>
+                            <div class="text-muted small">Livraison: ${new Date(o.date||'').toLocaleDateString('fr-FR')}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold">Total: €${total.toFixed(2)}</div>
+                            ${ok ? `<button class="btn btn-sm btn-outline-danger" data-action="cancel" data-id="${o.id}">Annuler</button>` : `<span class="badge bg-secondary">Non annulable</span>`}
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="small">${lines}</div>
+                    ${(!ok && info) ? `<div class="mt-2 alert alert-warning py-2 mb-0">${info}</div>` : ''}
+                </div>
+            </div>`;
+    }).join('');
+    container.innerHTML = html;
+    container.querySelectorAll('button[data-action="cancel"]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            const order = (CURRENT_MY_ORDERS||[]).find(x => String(x.id||'') === String(id));
+            const check = canCancelOrder(order);
+            if (!check.ok) { showToast('⏳ Trop tard', check.info || 'Annulation impossible', 'warning'); return; }
+            if (!confirm('Confirmer l\'annulation de cette commande ?')) return;
+            try {
+                const r = await fetch(`/api/delete-order?id=${encodeURIComponent(id)}`, { method:'DELETE' });
+                const j = await r.json().catch(()=>({}));
+                if (r.ok && j && j.ok) { showToast('✅ Annulée', 'Votre commande a été annulée.', 'success'); await fetchMyOrders(); }
+                else { showToast('❌ Erreur', (j && j.message) ? j.message : 'Annulation impossible', 'error'); }
+            } catch(err) { console.error(err); showToast('❌ Erreur réseau', 'Réessayez plus tard.', 'error'); }
         });
+    });
+}
 
-        let result = null;
-        try { result = await response.json(); } catch (e) { result = null; }
+async function pollMyOrdersIfChanged(){
+    const stored = localStorage.getItem('currentUser');
+    let currentUser = null;
+    try { currentUser = stored ? JSON.parse(stored) : null; } catch(e) { currentUser = null; }
+    if (!currentUser) return;
+    const r = await fetch('/api/get-orders-by-user', {
+        method:'POST', headers:{ 'Content-Type':'application/json' }, cache:'no-cache',
+        body: JSON.stringify({ userId: currentUser.userId || currentUser.id, email: currentUser.email })
+    });
+    const j = await r.json().catch(()=>({}));
+    if (!r.ok || !j || !j.orders) return;
+    const fp = fingerprintOrders(j.orders||[]);
+    if (fp !== MY_ORDERS_FP) { CURRENT_MY_ORDERS = j.orders||[]; MY_ORDERS_FP = fp; renderMyOrders(CURRENT_MY_ORDERS); }
+}
 
-        container.querySelectorAll('button[data-action="cancel"]').forEach(btn => {
-            showToast('❌ Erreur', 'Erreur lors de la récupération: ' + (result && result.message ? result.message : response.statusText), 'error');
-            container.innerHTML = '<div class="alert alert-warning">Impossible de charger les commandes.</div>';
-                if (!id) return;
-                // Double-check 48h rule client-side using current order data
-                const order = (CURRENT_MY_ORDERS || []).find(x => String(x.id||'') === String(id));
-                const endDateStr = order && (order.date || order.seasonEndDate);
-                if (!endDateStr) { showToast('❌ Erreur', 'Date de fin inconnue pour cette commande.', 'error'); return; }
-                const now = new Date();
-                const end = new Date(endDateStr);
-                const diffHours = (end.getTime() - now.getTime()) / (1000*60*60);
-                if (diffHours < 48) {
-                    showToast('⏳ Trop tard', 'Annulation impossible: moins de 48h avant la fin de la saison.', 'warning');
-                    return;
-                }
-                if (!confirm('Confirmer l\'annulation de cette commande ?')) return;
-                try {
-                    const r = await fetch(`/api/delete-order?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-                    const j = await r.json().catch(()=>({}));
-                    if (r.ok && j && j.ok) {
-                        showToast('✅ Annulée', 'Votre commande a été annulée.', 'success');
-                        await fetchMyOrders();
-                    } else {
-                        showToast('❌ Erreur', (j && j.message) ? j.message : 'Annulation impossible', 'error');
-                    }
-                } catch(err) {
-                    console.error('Annulation', err);
-                    showToast('❌ Erreur réseau', 'Réessayez plus tard.', 'error');
-                }
-            const nk = normalizeKey(key);
-            if (nk in map) return map[nk];
-            // chercher correspondance insensible à la casse parmi les clés existantes
-            for (const k of Object.keys(map)) { if (normalizeKey(k) === nk) return map[k]; }
-            return undefined;
-        }
-        orders.forEach(o => {
-            const card = document.createElement('div');
-            card.className = 'order-card';
-            const dateCmd = o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
-            
-            const itemsHtml = (o.items || []).map(it => {
-                const priceFromMap = resolveMap(NAME_PRICES, it.name);
-                const unit = Number(priceFromMap !== undefined ? priceFromMap : (it.price || 0));
-                const qty = Number(it.quantity) || 0;
-                const weightFromMap = resolveMap(NAME_WEIGHTS, it.name);
-                const unitWeight = Number(weightFromMap || 0);
-                const line = unit * qty;
-                const lineWeight = unitWeight * qty;
-                return `<div class="item-row"><span>${qty} × ${it.name}</span><span class="text-muted">${`€${unit.toFixed(2)}`} /u • ${`€${line.toFixed(2)}`} ${unitWeight ? `• ${unitWeight.toFixed(3)} kg/u • ${lineWeight.toFixed(3)} kg` : ''}</span></div>`;
-            }).join('');
-            const total = (o.items || []).reduce((s, it) => {
-                const priceFromMap = resolveMap(NAME_PRICES, it.name);
-                const unit = Number(priceFromMap !== undefined ? priceFromMap : (it.price || 0));
-                const qty = Number(it.quantity)||0;
-                return s + unit * qty;
-            }, 0);
-            
+document.addEventListener('DOMContentLoaded', async () => {
+    const logout = document.getElementById('logoutLink');
+    if (logout) { logout.addEventListener('click', (e)=>{ e.preventDefault(); localStorage.removeItem('currentUser'); window.location.href = 'index.html'; }); }
+    showPageLoader('Chargement des commandes…');
+    try { await fetchMyOrders(); } finally { hidePageLoader(); }
+    if (!AUTO_REFRESH_HANDLE) { AUTO_REFRESH_HANDLE = setInterval(pollMyOrdersIfChanged, 10000); }
+});
             card.innerHTML = `
                 <div class="order-header">
                     <div class="order-date">📅 ${dateCmd}</div>
