@@ -141,6 +141,11 @@ function renderClientProducts(products){
         byCategory.get(cat).push(p);
     });
 
+    if (activeProducts.length === 0 || byCategory.size === 0) {
+        productGrid.innerHTML = '<div class="alert alert-warning text-center">Momentanément aucun produit est disponible.</div>';
+        return;
+    }
+
     Array.from(byCategory.entries()).sort((a,b)=> String(a[0]).localeCompare(String(b[0]))).forEach(([cat, list]) => {
         // sort inside category by sortOrder then name
         list.sort((a,b)=>{
