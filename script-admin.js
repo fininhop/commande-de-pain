@@ -268,7 +268,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Load and render list
                     const cats = await loadCategories();
                     const listEl = document.getElementById('categoriesList');
-                    listEl.innerHTML = cats.map(c => `<div class="list-group-item d-flex justify-content-between align-items-center"><span>${c.name}</span><button class="btn btn-sm btn-outline-danger" data-action="delete-cat" data-name="${c.name}" ${c.productCount>0?'disabled title="Catégorie non vide"':''}>Supprimer</button></div>`).join('');
+                    const optionsHtml = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+                    listEl.innerHTML = cats.map(c => {
+                        const nonEmpty = (c.productCount || 0) > 0;
+                        return `<div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>${c.name} ${nonEmpty?`<span class='badge bg-secondary ms-2'>${c.productCount} produit(s)</span>`:''}</span>
+                                <button class="btn btn-sm btn-outline-danger" data-action="delete-cat" data-name="${c.name}">${nonEmpty?'Supprimer (vide)':'Supprimer'}</button>
+                            </div>
+                            ${nonEmpty ? `<div class="mt-2 d-flex gap-2 align-items-center">
+                                <select class="form-select form-select-sm" data-role="move-target">
+                                    <option value="">Choisir catégorie cible…</option>
+                                    ${optionsHtml}
+                                </select>
+                                <button class="btn btn-sm btn-outline-primary" data-action="move-then-delete" data-name="${c.name}">Déplacer les produits puis supprimer</button>
+                            </div>`:''}
+                        </div>`;
+                    }).join('');
                     categoriesModal.show();
                 });
             }
@@ -287,25 +303,108 @@ document.addEventListener('DOMContentLoaded', () => {
                         const cats = await loadCategories();
                         renderCategoryOptions(catSelect, cats);
                         const listEl = document.getElementById('categoriesList');
-                        listEl.innerHTML = cats.map(c => `<div class="list-group-item d-flex justify-content-between align-items-center"><span>${c.name}</span><button class="btn btn-sm btn-outline-danger" data-action="delete-cat" data-name="${c.name}" ${c.productCount>0?'disabled title="Catégorie non vide"':''}>Supprimer</button></div>`).join('');
+                        const optionsHtml = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+                        listEl.innerHTML = cats.map(c => {
+                            const nonEmpty = (c.productCount || 0) > 0;
+                            return `<div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>${c.name} ${nonEmpty?`<span class='badge bg-secondary ms-2'>${c.productCount} produit(s)</span>`:''}</span>
+                                    <button class="btn btn-sm btn-outline-danger" data-action="delete-cat" data-name="${c.name}">${nonEmpty?'Supprimer (vide)':'Supprimer'}</button>
+                                </div>
+                                ${nonEmpty ? `<div class="mt-2 d-flex gap-2 align-items-center">
+                                    <select class="form-select form-select-sm" data-role="move-target">
+                                        <option value="">Choisir catégorie cible…</option>
+                                        ${optionsHtml}
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary" data-action="move-then-delete" data-name="${c.name}">Déplacer les produits puis supprimer</button>
+                                </div>`:''}
+                            </div>`;
+                        }).join('');
                     } else showToast('Erreur', j.error || 'Échec ajout catégorie', 'error');
                 });
             }
             const categoriesList = document.getElementById('categoriesList');
             if (categoriesList) {
                 categoriesList.addEventListener('click', async (e)=>{
-                    const btn = e.target.closest('button[data-action="delete-cat"]');
-                    if (!btn) return;
-                    const name = btn.getAttribute('data-name');
+                    const moveBtn = e.target.closest('button[data-action="move-then-delete"]');
+                    const deleteBtn = e.target.closest('button[data-action="delete-cat"]');
                     const token = localStorage.getItem('adminToken');
-                    const r = await fetch('/api/products?category='+encodeURIComponent(name), { method:'DELETE', headers:{ 'x-admin-token': token } });
-                    const j = await r.json();
-                    if (j.ok) {
-                        showToast('Catégorie', 'Supprimée', 'success');
-                        const cats = await loadCategories();
-                        renderCategoryOptions(catSelect, cats);
-                        categoriesList.innerHTML = cats.map(c => `<div class="list-group-item d-flex justify-content-between align-items-center"><span>${c.name}</span><button class="btn btn-sm btn-outline-danger" data-action="delete-cat" data-name="${c.name}" ${c.productCount>0?'disabled title="Catégorie non vide"':''}>Supprimer</button></div>`).join('');
-                    } else showToast('Erreur', j.error || 'Échec suppression catégorie', 'error');
+                    if (moveBtn) {
+                        const source = moveBtn.getAttribute('data-name');
+                        const container = moveBtn.closest('.list-group-item');
+                        const targetSelect = container && container.querySelector('select[data-role="move-target"]');
+                        const target = targetSelect ? targetSelect.value : '';
+                        if (!target) { showToast('Cible requise', 'Choisissez une catégorie cible', 'warning'); return; }
+                        if (target === source) { showToast('Cible invalide', 'Choisissez une autre catégorie', 'warning'); return; }
+                        // Charger tous les produits, déplacer ceux de la catégorie source
+                        try {
+                            const resp = await fetch('/api/products');
+                            const data = await resp.json();
+                            if (!data.ok) throw new Error('Produits non chargés');
+                            const prods = (data.products||[]).filter(p => (p.category||'') === source);
+                            for (const p of prods) {
+                                await fetch('/api/products?id='+encodeURIComponent(p.id), { method:'PUT', headers:{ 'Content-Type':'application/json', 'x-admin-token': token }, body: JSON.stringify({ category: target }) });
+                            }
+                            // Puis supprimer la catégorie
+                            const rd = await fetch('/api/products?category='+encodeURIComponent(source), { method:'DELETE', headers:{ 'x-admin-token': token } });
+                            const jd = await rd.json();
+                            if (jd.ok) {
+                                showToast('Succès', 'Produits déplacés et catégorie supprimée', 'success');
+                                const cats = await loadCategories();
+                                renderCategoryOptions(catSelect, cats);
+                                const optionsHtml = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+                                categoriesList.innerHTML = cats.map(c => {
+                                    const nonEmpty = (c.productCount || 0) > 0;
+                                    return `<div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>${c.name} ${nonEmpty?`<span class='badge bg-secondary ms-2'>${c.productCount} produit(s)</span>`:''}</span>
+                                            <button class="btn btn-sm btn-outline-danger" data-action="delete-cat" data-name="${c.name}">${nonEmpty?'Supprimer (vide)':'Supprimer'}</button>
+                                        </div>
+                                        ${nonEmpty ? `<div class="mt-2 d-flex gap-2 align-items-center">
+                                            <select class="form-select form-select-sm" data-role="move-target">
+                                                <option value="">Choisir catégorie cible…</option>
+                                                ${optionsHtml}
+                                            </select>
+                                            <button class="btn btn-sm btn-outline-primary" data-action="move-then-delete" data-name="${c.name}">Déplacer les produits puis supprimer</button>
+                                        </div>`:''}
+                                    </div>`;
+                                }).join('');
+                            } else {
+                                showToast('Erreur', jd.error || 'Échec suppression catégorie après déplacement', 'error');
+                            }
+                        } catch(err) {
+                            console.error(err);
+                            showToast('Erreur réseau', 'Impossible de déplacer/supprimer', 'error');
+                        }
+                        return;
+                    }
+                    if (deleteBtn) {
+                        const name = deleteBtn.getAttribute('data-name');
+                        const r = await fetch('/api/products?category='+encodeURIComponent(name), { method:'DELETE', headers:{ 'x-admin-token': token } });
+                        const j = await r.json();
+                        if (j.ok) {
+                            showToast('Catégorie', 'Supprimée', 'success');
+                            const cats = await loadCategories();
+                            renderCategoryOptions(catSelect, cats);
+                            const optionsHtml = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+                            categoriesList.innerHTML = cats.map(c => {
+                                const nonEmpty = (c.productCount || 0) > 0;
+                                return `<div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>${c.name} ${nonEmpty?`<span class='badge bg-secondary ms-2'>${c.productCount} produit(s)</span>`:''}</span>
+                                        <button class="btn btn-sm btn-outline-danger" data-action="delete-cat" data-name="${c.name}">${nonEmpty?'Supprimer (vide)':'Supprimer'}</button>
+                                    </div>
+                                    ${nonEmpty ? `<div class="mt-2 d-flex gap-2 align-items-center">
+                                        <select class="form-select form-select-sm" data-role="move-target">
+                                            <option value="">Choisir catégorie cible…</option>
+                                            ${optionsHtml}
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-primary" data-action="move-then-delete" data-name="${c.name}">Déplacer les produits puis supprimer</button>
+                                    </div>`:''}
+                                </div>`;
+                            }).join('');
+                        } else showToast('Erreur', j.error || 'Échec suppression catégorie', 'error');
+                    }
                 });
             }
             form.addEventListener('submit', async (e) => {
@@ -322,11 +421,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!category) {
                     return showMessageModal('Catégorie requise', 'Veuillez renseigner une catégorie pour le produit.', 'warning');
                 }
-                if (Number.isNaN(sortOrder)) {
-                    return showMessageModal('Position requise', 'Veuillez saisir une position d\'affichage valide (entier).', 'warning');
-                }
                 const token = localStorage.getItem('adminToken');
-                const resp = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name, price, unitWeight, active: true, category, sortOrder }) });
+                const payload = { name, price, unitWeight, active: true, category };
+                if (!Number.isNaN(sortOrder)) payload.sortOrder = sortOrder; // blank = server will set first
+                const resp = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify(payload) });
                 const j = await resp.json();
                 if (j.ok) {
                     form.reset();
@@ -403,16 +501,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     showToast('Catégorie requise', 'Veuillez renseigner une catégorie pour le produit', 'warning');
                     return;
                 }
-                if (Number.isNaN(sortOrder)) {
-                    showToast('Position requise', 'Veuillez saisir une position d\'affichage valide (entier).', 'warning');
-                    return;
-                }
                 const token = localStorage.getItem('adminToken');
                 try {
+                    const payload = { name, price, unitWeight, active, category };
+                    if (!Number.isNaN(sortOrder)) payload.sortOrder = sortOrder; // blank keeps previous or server validation
                     const resp = await fetch('/api/products?id=' + encodeURIComponent(id), {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
-                        body: JSON.stringify({ name, price, unitWeight, active, category, sortOrder })
+                        body: JSON.stringify(payload)
                     });
                     const j = await resp.json();
                     if (resp.ok && j && j.ok) {
