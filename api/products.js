@@ -21,8 +21,17 @@ module.exports = async function handler(req, res) {
     const col = global.db.collection('products');
 
     if (req.method === 'GET') {
-      const snap = await col.orderBy('name').get();
-      const products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const snap = await col.get();
+      let products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      products.forEach(p => { if (p.sortOrder === undefined) p.sortOrder = 0; if (p.category === undefined) p.category = ''; });
+      products.sort((a,b)=>{
+        const ca = String(a.category||'').toLowerCase();
+        const cb = String(b.category||'').toLowerCase();
+        if (ca < cb) return -1; if (ca > cb) return 1;
+        const sa = Number(a.sortOrder||0), sb = Number(b.sortOrder||0);
+        if (sa !== sb) return sa - sb;
+        return String(a.name||'').localeCompare(String(b.name||''));
+      });
       return res.status(200).json({ ok: true, products });
     }
 
@@ -32,7 +41,7 @@ module.exports = async function handler(req, res) {
       if (!expected || provided !== expected) {
         return res.status(401).json({ ok: false, error: 'Accès administrateur requis' });
       }
-      const { name, price, unitWeight, active } = req.body || {};
+      const { name, price, unitWeight, active, category, sortOrder } = req.body || {};
       if (!name || typeof price !== 'number' || typeof unitWeight !== 'number') {
         return res.status(400).json({ ok: false, error: 'Champs requis: name, price(number), unitWeight(number)' });
       }
@@ -41,6 +50,8 @@ module.exports = async function handler(req, res) {
         price,
         unitWeight,
         active: active === undefined ? true : !!active,
+        category: category ? String(category).trim() : '',
+        sortOrder: typeof sortOrder === 'number' ? sortOrder : 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -56,12 +67,14 @@ module.exports = async function handler(req, res) {
       }
       const id = req.query.id;
       if (!id) return res.status(400).json({ ok: false, error: 'Paramètre id manquant' });
-      const { name, price, unitWeight, active } = req.body || {};
+      const { name, price, unitWeight, active, category, sortOrder } = req.body || {};
       const update = { updatedAt: new Date().toISOString() };
       if (name !== undefined) update.name = String(name).trim();
       if (price !== undefined) update.price = Number(price);
       if (unitWeight !== undefined) update.unitWeight = Number(unitWeight);
       if (active !== undefined) update.active = !!active;
+      if (category !== undefined) update.category = String(category || '').trim();
+      if (sortOrder !== undefined) update.sortOrder = Number(sortOrder) || 0;
       await col.doc(id).set(update, { merge: true });
       return res.status(200).json({ ok: true });
     }

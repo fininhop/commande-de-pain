@@ -57,48 +57,117 @@ document.addEventListener('DOMContentLoaded', () => {
             const grid = document.getElementById('productsGrid');
             if (!grid) return;
             grid.innerHTML = '';
+            // Group products by category for admin view
+            const byCat = new Map();
             currentProducts.forEach(p => {
-                const col = document.createElement('div');
-                col.className = 'col-12 col-md-6';
-                const card = document.createElement('div');
-                card.className = 'card h-100 shadow-sm';
-                const body = document.createElement('div');
-                body.className = 'card-body';
-                const title = document.createElement('h6');
-                title.className = 'card-title fw-bold text-primary mb-2';
-                title.textContent = String(p.name || '');
-                const priceEl = document.createElement('p');
-                priceEl.className = 'card-text text-success fw-semibold fs-6 mb-1';
-                priceEl.textContent = '€ ' + Number(p.price).toFixed(2);
-                const weightEl = document.createElement('p');
-                weightEl.className = 'text-muted small mb-2';
-                weightEl.textContent = Number(p.unitWeight).toFixed(3) + ' kg / unité';
-                const activeBadge = document.createElement('span');
-                activeBadge.className = 'badge ' + (p.active ? 'bg-success' : 'bg-secondary');
-                activeBadge.textContent = p.active ? 'Actif' : 'Inactif';
-                activeBadge.style.marginRight = '8px';
-                const actions = document.createElement('div');
-                actions.className = 'd-flex justify-content-end gap-2';
-                const btnEdit = document.createElement('button');
-                btnEdit.className = 'btn btn-sm btn-outline-primary';
-                btnEdit.setAttribute('data-action', 'edit');
-                btnEdit.setAttribute('data-id', String(p.id));
-                btnEdit.textContent = 'Éditer';
-                const btnDelete = document.createElement('button');
-                btnDelete.className = 'btn btn-sm btn-outline-danger';
-                btnDelete.setAttribute('data-action', 'delete');
-                btnDelete.setAttribute('data-id', String(p.id));
-                btnDelete.textContent = 'Supprimer';
-                actions.appendChild(btnEdit); actions.appendChild(btnDelete);
-                body.appendChild(title);
-                body.appendChild(priceEl);
-                body.appendChild(weightEl);
-                body.appendChild(activeBadge);
-                body.appendChild(actions);
-                card.appendChild(body);
-                col.appendChild(card);
-                grid.appendChild(col);
+                const catName = (p.category || 'Autres').trim() || 'Autres';
+                if (!byCat.has(catName)) byCat.set(catName, []);
+                byCat.get(catName).push(p);
             });
+
+            const sortedCats = Array.from(byCat.entries()).sort((a,b)=> String(a[0]).localeCompare(String(b[0])));
+            sortedCats.forEach(([catName, list]) => {
+                const section = document.createElement('div');
+                section.className = 'col-12';
+                const title = document.createElement('h5');
+                title.className = 'mt-2 mb-2 text-secondary';
+                title.textContent = catName;
+                const row = document.createElement('div');
+                row.className = 'row g-3';
+                list.forEach(p => {
+                    const col = document.createElement('div');
+                    col.className = 'col-12 col-md-6';
+                    const card = document.createElement('div');
+                    card.className = 'card h-100 shadow-sm';
+                    const body = document.createElement('div');
+                    body.className = 'card-body';
+                    const nameEl = document.createElement('h6');
+                    nameEl.className = 'card-title fw-bold text-primary mb-2';
+                    nameEl.textContent = String(p.name || '');
+                    const priceEl = document.createElement('p');
+                    priceEl.className = 'card-text text-success fw-semibold fs-6 mb-1';
+                    priceEl.textContent = '€ ' + Number(p.price).toFixed(2);
+                    const weightEl = document.createElement('p');
+                    weightEl.className = 'text-muted small mb-2';
+                    weightEl.textContent = Number(p.unitWeight).toFixed(3) + ' kg / unité';
+                    const metaRow = document.createElement('div');
+                    metaRow.className = 'd-flex align-items-center justify-content-between mb-2';
+                    const catBadge = document.createElement('span');
+                    const cat = (p.category || '').trim();
+                    if (cat) { catBadge.className = 'badge bg-primary-subtle text-primary-emphasis'; catBadge.textContent = cat; }
+                    else { catBadge.className = 'badge bg-light text-muted'; catBadge.textContent = '—'; }
+                    const orderBadge = document.createElement('span');
+                    const so = (typeof p.sortOrder === 'number') ? p.sortOrder : 0;
+                    orderBadge.className = 'badge bg-secondary-subtle text-secondary-emphasis';
+                    orderBadge.textContent = '#' + so;
+                    metaRow.appendChild(catBadge);
+                    metaRow.appendChild(orderBadge);
+                    const statusRow = document.createElement('div');
+                    const activeBadge = document.createElement('span');
+                    activeBadge.className = 'badge ' + (p.active ? 'bg-success' : 'bg-secondary');
+                    activeBadge.textContent = p.active ? 'Actif' : 'Inactif';
+                    statusRow.appendChild(activeBadge);
+                    const actions = document.createElement('div');
+                    actions.className = 'd-flex justify-content-end gap-2 mt-2';
+                    const btnUp = document.createElement('button');
+                    btnUp.className = 'btn btn-sm btn-outline-secondary';
+                    btnUp.setAttribute('data-action','move-up');
+                    btnUp.setAttribute('data-id', String(p.id));
+                    btnUp.setAttribute('data-category', String(p.category||''));
+                    btnUp.textContent = '↑';
+                    const btnDown = document.createElement('button');
+                    btnDown.className = 'btn btn-sm btn-outline-secondary';
+                    btnDown.setAttribute('data-action','move-down');
+                    btnDown.setAttribute('data-id', String(p.id));
+                    btnDown.setAttribute('data-category', String(p.category||''));
+                    btnDown.textContent = '↓';
+                    const btnEdit = document.createElement('button');
+                    btnEdit.className = 'btn btn-sm btn-outline-primary';
+                    btnEdit.setAttribute('data-action', 'edit');
+                    btnEdit.setAttribute('data-id', String(p.id));
+                    btnEdit.textContent = 'Éditer';
+                    const btnDelete = document.createElement('button');
+                    btnDelete.className = 'btn btn-sm btn-outline-danger';
+                    btnDelete.setAttribute('data-action', 'delete');
+                    btnDelete.setAttribute('data-id', String(p.id));
+                    btnDelete.textContent = 'Supprimer';
+                    actions.appendChild(btnUp);
+                    actions.appendChild(btnDown);
+                    actions.appendChild(btnEdit);
+                    actions.appendChild(btnDelete);
+                    body.appendChild(nameEl);
+                    body.appendChild(priceEl);
+                    body.appendChild(weightEl);
+                    body.appendChild(metaRow);
+                    body.appendChild(statusRow);
+                    body.appendChild(actions);
+                    card.appendChild(body);
+                    col.appendChild(card);
+                    row.appendChild(col);
+                });
+                section.appendChild(title);
+                section.appendChild(row);
+                grid.appendChild(section);
+            });
+
+            async function swapSortOrderWithinCategory(catName, idA, idB) {
+                const prodA = currentProducts.find(p=>p.id===idA);
+                const prodB = currentProducts.find(p=>p.id===idB);
+                if (!prodA || !prodB) return false;
+                let aOrder = (typeof prodA.sortOrder==='number')?prodA.sortOrder:0;
+                let bOrder = (typeof prodB.sortOrder==='number')?prodB.sortOrder:0;
+                const token = localStorage.getItem('adminToken');
+                const headers = { 'Content-Type': 'application/json', 'x-admin-token': token };
+                try {
+                    const r1 = await fetch('/api/products?id='+encodeURIComponent(idA), { method:'PUT', headers, body: JSON.stringify({ sortOrder: bOrder }) });
+                    const j1 = await r1.json().catch(()=>({}));
+                    if (!r1.ok || !j1.ok) return false;
+                    const r2 = await fetch('/api/products?id='+encodeURIComponent(idB), { method:'PUT', headers, body: JSON.stringify({ sortOrder: aOrder }) });
+                    const j2 = await r2.json().catch(()=>({}));
+                    if (!r2.ok || !j2.ok) return false;
+                    return true;
+                } catch(e){ return false; }
+            }
 
             grid.querySelectorAll('button').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
@@ -110,14 +179,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!confirm(`Supprimer le produit "${prod?.name}" ?`)) return;
                         const r = await fetch(`/api/products?id=${id}`, { method: 'DELETE', headers: { 'x-admin-token': token } });
                         const j = await r.json();
-                        if (j.ok) {
-                            showToast('Produit supprimé', 'Succès');
-                            loadProducts();
-                        } else showToast(j.error || 'Erreur', 'Erreur');
+                        if (j.ok) { showToast('Produit supprimé', 'Succès'); loadProducts(); }
+                        else showToast(j.error || 'Erreur', 'Erreur');
                     }
                     if (action === 'edit') {
-                        try { console.debug('Produits: open edit modal for', prod); } catch(e){}
                         openProductModal(prod);
+                    }
+                    if (action === 'move-up' || action === 'move-down') {
+                        const catName = (prod && prod.category) ? String(prod.category) : '';
+                        const inCat = currentProducts.filter(p => (p.category||'') === catName)
+                            .sort((a,b)=>{
+                                const ca = (typeof a.sortOrder==='number')?a.sortOrder:0;
+                                const cb = (typeof b.sortOrder==='number')?b.sortOrder:0;
+                                if (ca !== cb) return ca - cb;
+                                return String(a.name||'').localeCompare(String(b.name||''));
+                            });
+                        const idx = inCat.findIndex(x => x.id === id);
+                        if (idx === -1) return;
+                        let targetIdx = action === 'move-up' ? idx - 1 : idx + 1;
+                        if (targetIdx < 0 || targetIdx >= inCat.length) return; // cannot move
+                        const ok = await swapSortOrderWithinCategory(catName, inCat[idx].id, inCat[targetIdx].id);
+                        if (ok) { showToast('Ordre mis à jour', 'Succès', 'success'); loadProducts(); }
+                        else { showToast('Échec de ré-ordonnancement', 'Erreur', 'error'); }
                     }
                 });
             });
@@ -131,11 +214,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const name = document.getElementById('prodName').value.trim();
                 const price = Number(document.getElementById('prodPrice').value);
                 const unitWeight = Number(document.getElementById('prodUnitWeight').value);
+                const category = (document.getElementById('prodCategory')?.value || '').trim();
+                let sortOrder = Number(document.getElementById('prodSortOrder')?.value);
+                if (Number.isNaN(sortOrder)) sortOrder = 0;
                 if (!name || Number.isNaN(price) || Number.isNaN(unitWeight)) {
                     return showMessageModal('Champs requis', 'Veuillez renseigner correctement les champs.', 'warning');
                 }
                 const token = localStorage.getItem('adminToken');
-                const resp = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name, price, unitWeight, active: true }) });
+                const resp = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name, price, unitWeight, active: true, category, sortOrder }) });
                 const j = await resp.json();
                 if (j.ok) {
                     form.reset();
@@ -152,6 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const productPriceInput = document.getElementById('productPrice');
         const productUnitWeightInput = document.getElementById('productUnitWeight');
         const productActiveInput = document.getElementById('productActive');
+        const productCategoryInput = document.getElementById('productCategory');
+        const productSortOrderInput = document.getElementById('productSortOrder');
         const saveProductBtn = document.getElementById('saveProductBtn');
         let productModal = null;
         if (productModalEl && window.bootstrap) {
@@ -168,6 +256,8 @@ document.addEventListener('DOMContentLoaded', () => {
             productPriceInput.value = prod && typeof prod.price === 'number' ? String(prod.price) : '';
             productUnitWeightInput.value = prod && typeof prod.unitWeight === 'number' ? String(prod.unitWeight) : '';
             productActiveInput.checked = !!(prod && prod.active !== false);
+            if (productCategoryInput) productCategoryInput.value = prod && prod.category ? String(prod.category) : '';
+            if (productSortOrderInput) productSortOrderInput.value = (prod && typeof prod.sortOrder === 'number') ? String(prod.sortOrder) : '';
             productModal.show();
         }
 
@@ -178,6 +268,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const price = Number(productPriceInput.value);
                 const unitWeight = Number(productUnitWeightInput.value);
                 const active = !!productActiveInput.checked;
+                const category = (productCategoryInput?.value || '').trim();
+                let sortOrder = Number(productSortOrderInput?.value);
+                if (Number.isNaN(sortOrder)) sortOrder = 0;
                 if (!name || Number.isNaN(price) || Number.isNaN(unitWeight)) {
                     showToast('Champs requis', 'Vérifiez nom, prix et poids', 'warning');
                     return;
@@ -187,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const resp = await fetch('/api/products?id=' + encodeURIComponent(id), {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
-                        body: JSON.stringify({ name, price, unitWeight, active })
+                        body: JSON.stringify({ name, price, unitWeight, active, category, sortOrder })
                     });
                     const j = await resp.json();
                     if (resp.ok && j && j.ok) {
