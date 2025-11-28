@@ -48,6 +48,18 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) { /* noop */ }
     
         // Produits: chargement et CRUD
+        let PRODUCTS_FP = '';
+        let ORDERS_FP = '';
+        let SEASONS_FP = '';
+        let USERS_FP = '';
+        let AUTO_REFRESH_HANDLE = null;
+
+        function computeFingerprint(list, pick) {
+            try {
+                const minimal = (list||[]).map(pick).sort((a,b)=> String(a.id||'').localeCompare(String(b.id||'')));
+                return JSON.stringify(minimal);
+            } catch(e){ return ''; }
+        }
         let currentProducts = [];
         async function loadProducts() {
             const grid = document.getElementById('productsGrid');
@@ -58,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await resp.json();
             if (!data.ok) return;
             currentProducts = data.products || [];
+            PRODUCTS_FP = computeFingerprint(currentProducts, p => ({ id: String(p.id||''), cat: String(p.category||''), so: Number(p.sortOrder||0), name: String(p.name||''), act: p.active!==false }));
             if (!grid) return;
             grid.innerHTML = '';
             // Group products by category for admin view and render as accordion
@@ -279,6 +292,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                 });
             });
+        }
+
+        async function pollProductsIfChanged() {
+            const r = await fetch('/api/products', { cache: 'no-cache' });
+            const j = await r.json().catch(()=>({}));
+            if (!j.ok) return;
+            const fp = computeFingerprint(j.products||[], p => ({ id: String(p.id||''), cat: String(p.category||''), so: Number(p.sortOrder||0), name: String(p.name||''), act: p.active!==false }));
+            if (fp !== PRODUCTS_FP) {
+                await loadProducts();
+            }
         }
 
         async function loadCategories() {
@@ -1123,6 +1146,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             currentOrders = result.orders || [];
+            ORDERS_FP = computeFingerprint(currentOrders, o => ({ id: String(o.id||''), ca: String(o.createdAt||''), d: String(o.date||''), n: String(o.name||''), len: (o.items||[]).length }));
             renderOrders(currentOrders, currentSortBy);
             showMessage('Chargé: ' + currentOrders.length + ' commandes', 'success');
         } catch (err) {
@@ -1139,6 +1163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAdminOrders(storedToken);
         fetchSeasons(storedToken);
         fetchUsers();
+        ensureAdminAutoRefresh();
     }
 
     adminForm.addEventListener('submit', async (e) => {
@@ -1153,6 +1178,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await Promise.all([fetchAdminOrders(token), fetchSeasons(token)]);
             await fetchUsers();
+            ensureAdminAutoRefresh();
         } finally {
             enableForm(adminForm);
             hidePageLoader();
@@ -1177,7 +1203,61 @@ document.addEventListener('DOMContentLoaded', () => {
         adminLogin.classList.remove('d-none');
         ordersContainer.innerHTML = '';
         showMessage('Déconnecté');
+        if (AUTO_REFRESH_HANDLE) { clearInterval(AUTO_REFRESH_HANDLE); AUTO_REFRESH_HANDLE = null; }
     });
+
+    async function pollOrdersIfChanged() {
+        const t = localStorage.getItem('adminToken');
+        if (!t) return;
+        const r = await fetch('/api/get-orders', { headers: { 'x-admin-token': t }, cache: 'no-cache' });
+        const j = await r.json().catch(()=>({}));
+        if (!r.ok || !j || !j.orders) return;
+        const fp = computeFingerprint(j.orders||[], o => ({ id: String(o.id||''), ca: String(o.createdAt||''), d: String(o.date||''), n: String(o.name||''), len: (o.items||[]).length }));
+        if (fp !== ORDERS_FP) {
+            await fetchAdminOrders(t);
+        }
+    }
+
+    async function pollSeasonsIfChanged() {
+        const t = localStorage.getItem('adminToken');
+        if (!t) return;
+        const r = await fetch('/api/seasons', { headers: { 'x-admin-token': t }, cache: 'no-cache' });
+        const j = await r.json().catch(()=>({}));
+        if (!r.ok || !j || !j.seasons) return;
+        const fp = computeFingerprint(j.seasons||[], s => ({ id: String(s.id||''), n: String(s.name||''), a: !!(s.startDate), b: !!(s.endDate) }));
+        if (fp !== SEASONS_FP) {
+            currentSeasons = j.seasons || [];
+            SEASONS_FP = fp;
+            renderSeasons(currentSeasons);
+            updateSeasonFilter();
+        }
+    }
+
+    async function pollUsersIfChanged() {
+        const r = await fetch('/api/get-users', { cache: 'no-cache' });
+        const j = await r.json().catch(()=>({}));
+        if (!j || !j.users) return;
+        const fp = computeFingerprint(j.users||[], u => ({ id: String(u.id||''), e: String(u.email||''), p: String(u.phone||'') }));
+        if (fp !== USERS_FP) {
+            allUsers = j.users || [];
+            USERS_FP = fp;
+            renderUsers(allUsers);
+        }
+    }
+
+    function ensureAdminAutoRefresh() {
+        if (AUTO_REFRESH_HANDLE) return;
+        AUTO_REFRESH_HANDLE = setInterval(async () => {
+            try {
+                await Promise.all([
+                    pollProductsIfChanged(),
+                    pollOrdersIfChanged(),
+                    pollSeasonsIfChanged(),
+                    pollUsersIfChanged()
+                ]);
+            } catch(e) { /* noop */ }
+        }, 10000);
+    }
 
     // Ouvrir le modal pour une nouvelle saison
     if (newSeasonBtn && seasonModal) {

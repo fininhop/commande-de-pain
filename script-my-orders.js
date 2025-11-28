@@ -29,6 +29,11 @@ function showToast(title, message, type = 'info') {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    let ORDERS_FP = '';
+    let AUTO_REFRESH_HANDLE = null;
+    function computeFingerprint(list){
+        try { return JSON.stringify((list||[]).map(o=>({id:String(o.id||''),ca:String(o.createdAt||''),d:String(o.date||''),len:(o.items||[]).length})).sort((a,b)=>a.id.localeCompare(b.id))); } catch(e){ return ''; }
+    }
     showPageLoader('Chargement des commandes…');
     const container = document.getElementById('ordersList');
     const logout = document.getElementById('logoutLink');
@@ -46,11 +51,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         logout.addEventListener('click', (e) => { e.preventDefault(); localStorage.removeItem('currentUser'); window.location.href = 'index.html'; });
     }
 
-    try {
+    async function fetchAndRender() {
         const response = await fetch('/api/get-orders-by-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.userId, email: currentUser.email })
+            body: JSON.stringify({ userId: currentUser.userId, email: currentUser.email }),
+            cache: 'no-cache'
         });
 
         let result = null;
@@ -63,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const orders = (result && result.orders) ? result.orders : [];
+        ORDERS_FP = computeFingerprint(orders);
         if (!orders.length) {
             container.innerHTML = '<div class="alert alert-light text-center py-5"><h5>Aucune commande trouvée</h5><p class="text-muted">Vous n\'avez pas encore passé de commande.</p><a href="index.html" class="btn btn-primary">Commander maintenant</a></div>';
             return;
@@ -121,6 +128,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             container.appendChild(card);
         });
 
+    }
+
+    try {
+        await fetchAndRender();
+        if (!AUTO_REFRESH_HANDLE) {
+            AUTO_REFRESH_HANDLE = setInterval(async ()=>{
+                try {
+                    const response = await fetch('/api/get-orders-by-user', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: currentUser.userId, email: currentUser.email }), cache: 'no-cache'
+                    });
+                    const result = await response.json().catch(()=>null);
+                    if (!response.ok || !result) return;
+                    const orders = result.orders || [];
+                    const fp = computeFingerprint(orders);
+                    if (fp !== ORDERS_FP) {
+                        await fetchAndRender();
+                    }
+                } catch(e){ /* noop */ }
+            }, 10000);
+        }
     } catch (err) {
         console.error('Erreur récupération commandes:', err);
         showToast('❌ Erreur réseau', 'Impossible de charger les commandes.', 'error');
