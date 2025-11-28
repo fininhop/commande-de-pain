@@ -374,7 +374,8 @@ function updateTotal() {
     const offcanvasTotal = document.getElementById('offcanvasTotal');
     if (basketItemsList && offcanvasTotal) {
         if (items.length > 0) {
-            let html = '<div class="list-group">';
+            let html = '<div class="d-flex justify-content-between align-items-center mb-2">\n                <strong>Mon panier</strong>\n                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearBasket()">Vider le panier</button>\n            </div>';
+            html += '<div class="list-group">';
             items.forEach(item => {
                 html += `
                     <div class="list-group-item">
@@ -387,7 +388,7 @@ function updateTotal() {
                         </div>
                         <div class="d-flex align-items-center justify-content-end gap-2 mt-2">
                             <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" onclick="basketChangeQuantity('${item.name.replace(/'/g,"\\'")}', -1)" style="width:32px;height:32px;padding:0;">−</button>
-                            <span class="px-2">${item.quantity}</span>
+                            <input type="number" class="form-control form-control-sm text-center" value="${item.quantity}" min="0" style="width:70px;" oninput="basketSetQuantity('${item.name.replace(/'/g,"\\'")}', this.value)" />
                             <button type="button" class="btn btn-sm btn-outline-success rounded-circle" onclick="basketChangeQuantity('${item.name.replace(/'/g,"\\'")}', 1)" style="width:32px;height:32px;padding:0;">+</button>
                             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="basketRemoveItem('${item.name.replace(/'/g,"\\'")}')">Supprimer</button>
                         </div>
@@ -422,11 +423,27 @@ function basketChangeQuantity(name, delta){
     updateTotal();
 }
 
+// Définir quantité depuis un champ de saisie du panier
+function basketSetQuantity(name, value){
+    const qty = parseInt(value);
+    if (Number.isNaN(qty) || qty < 0) return;
+    const input = findProductInputByName(name);
+    if (!input) return;
+    input.value = String(qty);
+    updateTotal();
+}
+
 // Supprimer un élément ajouté (mettre quantité à 0)
 function basketRemoveItem(name){
     const input = findProductInputByName(name);
     if (!input) return;
     input.value = '0';
+    updateTotal();
+}
+
+// Vider le panier (toutes quantités à 0)
+function clearBasket(){
+    document.querySelectorAll('#productGrid input[type="number"]').forEach(input => { input.value = '0'; });
     updateTotal();
 }
 
