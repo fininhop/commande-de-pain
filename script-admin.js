@@ -428,6 +428,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!category) {
                     return showMessageModal('Catégorie requise', 'Veuillez renseigner une catégorie pour le produit.', 'warning');
                 }
+                // Vérifier unicité de la position dans la catégorie lors de la création
+                if (!Number.isNaN(sortOrder)) {
+                    const dup = currentProducts.some(p => (p.category||'') === category && typeof p.sortOrder === 'number' && p.sortOrder === sortOrder);
+                    if (dup) {
+                        return showMessageModal('Position déjà utilisée', 'Un autre produit dans cette catégorie a déjà cette position. Choisissez une autre valeur ou laissez vide pour placer en premier.', 'warning');
+                    }
+                }
                 const token = localStorage.getItem('adminToken');
                 const payload = { name, price, unitWeight, active: true, category };
                 if (!Number.isNaN(sortOrder)) payload.sortOrder = sortOrder; // blank = server will set first
@@ -507,6 +514,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!category) {
                     showToast('Catégorie requise', 'Veuillez renseigner une catégorie pour le produit', 'warning');
                     return;
+                }
+                // Vérifier unicité de la position dans la catégorie lors de l'édition
+                if (!Number.isNaN(sortOrder)) {
+                    const dup = currentProducts.some(p => p.id !== id && (p.category||'') === category && typeof p.sortOrder === 'number' && p.sortOrder === sortOrder);
+                    if (dup) { showToast('Position déjà utilisée', 'Choisissez une autre valeur de position ou laissez vide pour conserver.', 'warning'); return; }
                 }
                 const token = localStorage.getItem('adminToken');
                 try {
