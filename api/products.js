@@ -108,16 +108,19 @@ module.exports = async function handler(req, res) {
 
       let finalSortOrder;
       if (typeof sortOrder === 'number' && !Number.isNaN(sortOrder)) {
+        if (sortOrder < 1) return res.status(400).json({ ok: false, error: 'La position doit être supérieure ou égale à 1' });
         finalSortOrder = sortOrder;
       } else {
-        // Compute to appear first: take minimum existing sortOrder in category and minus one
+        // Place at the end (no negatives): take maximum existing sortOrder in category and add 1; start at 1 when empty
         const qsnap = await col.where('category', '==', cat).get();
-        let minSo = null;
+        let maxSo = null;
         qsnap.forEach(d => {
-          const so = Number((d.data() || {}).sortOrder || 0);
-          if (minSo === null || so < minSo) minSo = so;
+          const so = Number((d.data() || {}).sortOrder);
+          if (Number.isFinite(so)) {
+            if (maxSo === null || so > maxSo) maxSo = so;
+          }
         });
-        finalSortOrder = (minSo === null) ? 0 : (minSo - 1);
+        finalSortOrder = (maxSo === null) ? 1 : (maxSo + 1);
       }
 
       const doc = {
@@ -156,6 +159,7 @@ module.exports = async function handler(req, res) {
       if (sortOrder !== undefined) {
         const so = Number(sortOrder);
         if (!Number.isFinite(so)) return res.status(400).json({ ok: false, error: 'Position d\'affichage invalide' });
+        if (so < 1) return res.status(400).json({ ok: false, error: 'La position doit être supérieure ou égale à 1' });
         update.sortOrder = so;
       }
       await col.doc(id).set(update, { merge: true });

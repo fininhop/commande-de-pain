@@ -607,6 +607,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 // Vérifier unicité de la position dans la catégorie lors de la création
                 if (!Number.isNaN(sortOrder)) {
+                    if (sortOrder < 1) {
+                        return showMessageModal('Position invalide', 'La position doit être supérieure ou égale à 1.', 'warning');
+                    }
                     const countInCat = currentProducts.filter(p => (p.category||'') === category).length;
                     if (sortOrder > countInCat + 1) {
                         return showMessageModal('Position invalide', `La position ne peut pas dépasser ${countInCat + 1}.`, 'warning');
@@ -698,6 +701,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 // Vérifier unicité de la position dans la catégorie lors de l'édition
                 if (!Number.isNaN(sortOrder)) {
+                    if (sortOrder < 1) { showToast('Position invalide', 'La position doit être supérieure ou égale à 1.', 'warning'); return; }
                     const countInCat = currentProducts.filter(p => (p.category||'') === category).length;
                     if (sortOrder > countInCat) { // en édition, max = nombre d'éléments existants
                         showToast('Position invalide', `La position ne peut pas dépasser ${countInCat}.`, 'warning');
