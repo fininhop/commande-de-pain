@@ -123,6 +123,16 @@ module.exports = async function handler(req, res) {
         finalSortOrder = (maxSo === null) ? 1 : (maxSo + 1);
       }
 
+      // Enforce uniqueness of sortOrder within the category
+      const dupSnap = await col
+        .where('category', '==', cat)
+        .where('sortOrder', '==', finalSortOrder)
+        .limit(1)
+        .get();
+      if (!dupSnap.empty) {
+        return res.status(400).json({ ok: false, error: 'Cette position est déjà utilisée dans cette catégorie' });
+      }
+
       const doc = {
         name: String(name).trim(),
         price,
@@ -162,7 +172,28 @@ module.exports = async function handler(req, res) {
         if (so < 1) return res.status(400).json({ ok: false, error: 'La position doit être supérieure ou égale à 1' });
         update.sortOrder = so;
       }
-      await col.doc(id).set(update, { merge: true });
+      // Fetch current document to evaluate uniqueness in the target category
+      const docRef = col.doc(id);
+      const existing = await docRef.get();
+      if (!existing.exists) return res.status(404).json({ ok: false, error: 'Produit introuvable' });
+      const existingData = existing.data() || {};
+      const targetCategory = (update.category !== undefined ? update.category : (existingData.category || '')).trim();
+      const targetSort = (update.sortOrder !== undefined ? update.sortOrder : existingData.sortOrder);
+      if (targetCategory) {
+        const soNum = Number(targetSort);
+        if (Number.isFinite(soNum)) {
+          const q = await col
+            .where('category', '==', targetCategory)
+            .where('sortOrder', '==', soNum)
+            .limit(5)
+            .get();
+          const conflict = q.docs.find(d => d.id !== id);
+          if (conflict) {
+            return res.status(400).json({ ok: false, error: 'Cette position est déjà utilisée dans cette catégorie' });
+          }
+        }
+      }
+      await docRef.set(update, { merge: true });
       return res.status(200).json({ ok: true });
     }
 
