@@ -170,11 +170,11 @@ function renderClientProducts(products){
             <div class="product-section">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="d-flex align-items-center gap-2">
-                        <button class="btn btn-sm btn-outline-secondary rounded-circle" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="true" data-role="toggle-arrow" style="width:32px;height:32px;line-height:1;">▲</button>
+                        <button class="btn btn-sm btn-outline-secondary rounded-circle" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" data-role="toggle-arrow" style="width:32px;height:32px;line-height:1;">▼</button>
                         <h5 class="mb-0">${cat}</h5>
                     </div>
                 </div>
-                <div id="${collapseId}" class="collapse show">
+                <div id="${collapseId}" class="collapse">
                     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3"></div>
                 </div>
             </div>`;
