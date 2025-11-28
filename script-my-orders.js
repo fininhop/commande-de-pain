@@ -114,7 +114,7 @@ function renderMyOrders(list){
                 const stored = localStorage.getItem('currentUser');
                 let currentUser = null;
                 try { currentUser = stored ? JSON.parse(stored) : null; } catch(e) { currentUser = null; }
-                const r = await fetch('/api/cancel-order', {
+                const r = await fetch('/api/delete-order', {
                     method:'POST', headers:{ 'Content-Type':'application/json' },
                     body: JSON.stringify({ orderId: id, email: currentUser && currentUser.email })
                 });

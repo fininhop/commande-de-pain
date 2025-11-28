@@ -31,30 +31,47 @@ module.exports = async (req, res) => {
         });
     }
 
-    // Vérification de la méthode
+    // Méthode requise
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
     try {
-        // Vérifier token admin
-        const provided = req.headers['x-admin-token'] || req.query.adminToken || null;
-        const expected = process.env.ADMIN_TOKEN || null;
-        if (!expected || provided !== expected) {
-            return res.status(401).json({ message: 'Accès administrateur requis' });
-        }
-
-        const { orderId } = req.body || {};
+        const { orderId, email } = req.body || {};
 
         // Validation
         if (!orderId) {
             return res.status(400).json({ message: 'ID de commande requis' });
         }
 
-        // Supprimer la commande
-        await global.db.collection('orders').doc(orderId).delete();
+        const provided = req.headers['x-admin-token'] || req.query.adminToken || null;
+        const expected = process.env.ADMIN_TOKEN || null;
+        const isAdmin = expected && provided === expected;
 
-        res.status(200).json({ message: 'Commande supprimée avec succès', orderId: orderId });
+        const docRef = global.db.collection('orders').doc(String(orderId));
+        const snap = await docRef.get();
+        if (!snap.exists) {
+            return res.status(404).json({ message: 'Commande introuvable' });
+        }
+        const order = snap.data();
+
+        if (!isAdmin) {
+            // Chemin utilisateur: ownership et règle des 48h
+            if (!email) return res.status(400).json({ message: 'Email requis pour annulation utilisateur' });
+            const ownerEmail = String(order.email || '').toLowerCase();
+            if (ownerEmail !== String(email || '').toLowerCase()) {
+                return res.status(403).json({ message: 'Vous ne pouvez annuler que vos propres commandes' });
+            }
+            const endDateStr = order.date || order.seasonEndDate;
+            if (!endDateStr) return res.status(400).json({ message: 'Date de fin de saison inconnue' });
+            const now = Date.now();
+            const end = new Date(endDateStr).getTime();
+            const diffHours = (end - now) / (1000*60*60);
+            if (diffHours < 48) return res.status(400).json({ message: 'Annulation impossible: moins de 48h avant la fin de la saison' });
+        }
+
+        await docRef.delete();
+        res.status(200).json({ ok: true, orderId });
 
     } catch (error) {
         console.error('Erreur de suppression Firestore:', error);
