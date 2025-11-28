@@ -374,7 +374,8 @@ function updateTotal() {
     const offcanvasTotal = document.getElementById('offcanvasTotal');
     if (basketItemsList && offcanvasTotal) {
         if (items.length > 0) {
-            let html = '<div class="d-flex justify-content-between align-items-center mb-2">\n                <strong>Mon panier</strong>\n                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearBasket()">Vider le panier</button>\n            </div>';
+            const canClear = items.length > 0;
+            let html = `<div class="d-flex justify-content-between align-items-center mb-2">\n                <strong>Mon panier</strong>\n                <button type="button" class="btn btn-sm btn-outline-danger ${canClear? '':'disabled'}" ${canClear? 'onclick="clearBasket()"':''}>Vider le panier</button>\n            </div>`;
             html += '<div class="list-group">';
             items.forEach(item => {
                 html += `
@@ -443,6 +444,9 @@ function basketRemoveItem(name){
 
 // Vider le panier (toutes quantités à 0)
 function clearBasket(){
+    const hasAny = Array.from(document.querySelectorAll('#productGrid input[type="number"]')).some(input => (parseInt(input.value)||0) > 0);
+    if (!hasAny) return;
+    if (!confirm('Vider le panier ? Toutes les quantités seront remises à zéro.')) return;
     document.querySelectorAll('#productGrid input[type="number"]').forEach(input => { input.value = '0'; });
     updateTotal();
 }
