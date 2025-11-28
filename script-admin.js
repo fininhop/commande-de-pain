@@ -535,9 +535,20 @@ document.addEventListener('DOMContentLoaded', () => {
                             const resp = await fetch('/api/products');
                             const data = await resp.json();
                             if (!data.ok) throw new Error('Produits non chargés');
-                            const prods = (data.products||[]).filter(p => (p.category||'') === source);
+                            const allProducts = data.products || [];
+                            const prods = allProducts.filter(p => (p.category||'') === source)
+                                .sort((a,b)=>{
+                                    const sa = Number(a.sortOrder)||0; const sb = Number(b.sortOrder)||0; return sa - sb;
+                                });
+                            let targetMax = 0;
+                            allProducts.forEach(p => { if ((p.category||'') === target) { const so = Number(p.sortOrder)||0; if (so > targetMax) targetMax = so; } });
                             for (const p of prods) {
-                                await fetch('/api/products?id='+encodeURIComponent(p.id), { method:'PUT', headers:{ 'Content-Type':'application/json', 'x-admin-token': token }, body: JSON.stringify({ category: target }) });
+                                targetMax += 1;
+                                await fetch('/api/products?id='+encodeURIComponent(p.id), {
+                                    method:'PUT',
+                                    headers:{ 'Content-Type':'application/json', 'x-admin-token': token },
+                                    body: JSON.stringify({ category: target, sortOrder: targetMax })
+                                });
                             }
                             // Puis supprimer la catégorie
                             const rd = await fetch('/api/products?category='+encodeURIComponent(source), { method:'DELETE', headers:{ 'x-admin-token': token } });
