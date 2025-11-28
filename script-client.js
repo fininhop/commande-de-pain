@@ -377,12 +377,20 @@ function updateTotal() {
             let html = '<div class="list-group">';
             items.forEach(item => {
                 html += `
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>${item.name}</strong><br>
-                            <small class="text-muted">${item.quantity} × €${item.price.toFixed(2)}</small>
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${item.name}</strong><br>
+                                <small class="text-muted">€${item.price.toFixed(2)} / unité</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">€${item.total.toFixed(2)}</span>
                         </div>
-                        <span class="badge bg-primary rounded-pill">€${item.total.toFixed(2)}</span>
+                        <div class="d-flex align-items-center justify-content-end gap-2 mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" onclick="basketChangeQuantity('${item.name.replace(/'/g,"\\'")}', -1)" style="width:32px;height:32px;padding:0;">−</button>
+                            <span class="px-2">${item.quantity}</span>
+                            <button type="button" class="btn btn-sm btn-outline-success rounded-circle" onclick="basketChangeQuantity('${item.name.replace(/'/g,"\\'")}', 1)" style="width:32px;height:32px;padding:0;">+</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="basketRemoveItem('${item.name.replace(/'/g,"\\'")}')">Supprimer</button>
+                        </div>
                     </div>
                 `;
             });
@@ -393,6 +401,33 @@ function updateTotal() {
         }
         offcanvasTotal.textContent = totalPrice.toFixed(2);
     }
+}
+
+// Trouver l'input produit par nom
+function findProductInputByName(name){
+    const inputs = document.querySelectorAll('#productGrid input[type="number"]');
+    for (const input of inputs){
+        if ((input.getAttribute('data-name')||'') === name) return input;
+    }
+    return null;
+}
+
+// Changer la quantité depuis le panier (offcanvas)
+function basketChangeQuantity(name, delta){
+    const input = findProductInputByName(name);
+    if (!input) return;
+    const current = parseInt(input.value) || 0;
+    const next = Math.max(0, current + delta);
+    input.value = String(next);
+    updateTotal();
+}
+
+// Supprimer un élément ajouté (mettre quantité à 0)
+function basketRemoveItem(name){
+    const input = findProductInputByName(name);
+    if (!input) return;
+    input.value = '0';
+    updateTotal();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
