@@ -335,7 +335,7 @@ function updateTotal() {
             const line = price * qty;
             totalItems += qty;
             totalPrice += line;
-            items.push({ name, quantity: qty, price, total: line });
+            items.push({ name, quantity: qty, price, total: line, inputId: input.id });
         }
     });
     const totalEl = document.getElementById('total-price');
@@ -388,10 +388,10 @@ function updateTotal() {
                             <span class="badge bg-primary rounded-pill">€${item.total.toFixed(2)}</span>
                         </div>
                         <div class="d-flex align-items-center justify-content-end gap-2 mt-2">
-                            <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" onclick="basketChangeQuantity('${item.name.replace(/'/g,"\\'")}', -1)" style="width:32px;height:32px;padding:0;">−</button>
-                            <input type="number" class="form-control form-control-sm text-center" value="${item.quantity}" min="0" style="width:70px;" oninput="basketSetQuantity('${item.name.replace(/'/g,"\\'")}', this.value)" />
-                            <button type="button" class="btn btn-sm btn-outline-success rounded-circle" onclick="basketChangeQuantity('${item.name.replace(/'/g,"\\'")}', 1)" style="width:32px;height:32px;padding:0;">+</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="basketRemoveItem('${item.name.replace(/'/g,"\\'")}')">Supprimer</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" onclick="basketChangeQuantityById('${item.inputId}', -1)" style="width:32px;height:32px;padding:0;">−</button>
+                            <input type="number" class="form-control form-control-sm text-center" value="${item.quantity}" min="0" style="width:70px;" oninput="basketSetQuantityById('${item.inputId}', this.value)" />
+                            <button type="button" class="btn btn-sm btn-outline-success rounded-circle" onclick="basketChangeQuantityById('${item.inputId}', 1)" style="width:32px;height:32px;padding:0;">+</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="basketRemoveItemById('${item.inputId}')">Supprimer</button>
                         </div>
                     </div>
                 `;
@@ -405,18 +405,14 @@ function updateTotal() {
     }
 }
 
-// Trouver l'input produit par nom
-function findProductInputByName(name){
-    const inputs = document.querySelectorAll('#productGrid input[type="number"]');
-    for (const input of inputs){
-        if ((input.getAttribute('data-name')||'') === name) return input;
-    }
-    return null;
+// Trouver l'input produit par id
+function getProductInputById(id){
+    return document.getElementById(id);
 }
 
 // Changer la quantité depuis le panier (offcanvas)
-function basketChangeQuantity(name, delta){
-    const input = findProductInputByName(name);
+function basketChangeQuantityById(id, delta){
+    const input = getProductInputById(id);
     if (!input) return;
     const current = parseInt(input.value) || 0;
     const next = Math.max(0, current + delta);
@@ -425,18 +421,18 @@ function basketChangeQuantity(name, delta){
 }
 
 // Définir quantité depuis un champ de saisie du panier
-function basketSetQuantity(name, value){
+function basketSetQuantityById(id, value){
     const qty = parseInt(value);
     if (Number.isNaN(qty) || qty < 0) return;
-    const input = findProductInputByName(name);
+    const input = getProductInputById(id);
     if (!input) return;
     input.value = String(qty);
     updateTotal();
 }
 
 // Supprimer un élément ajouté (mettre quantité à 0)
-function basketRemoveItem(name){
-    const input = findProductInputByName(name);
+function basketRemoveItemById(id){
+    const input = getProductInputById(id);
     if (!input) return;
     input.value = '0';
     updateTotal();
