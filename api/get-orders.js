@@ -44,35 +44,56 @@ module.exports = async (req, res) => {
         const provided = req.headers['x-admin-token'] || req.query.adminToken || null;
         const expected = process.env.ADMIN_TOKEN || null;
         const isAdmin = expected && provided === expected;
-        // Récupérer TOUTES les commandes sans ordre d'abord (pour compatibilité avec anciennes données)
+        // Récupérer TOUTES les commandes (compat historique)
         const snapshot = await global.db.collection('orders').get();
 
-        const orders = snapshot.docs.map(doc => {
+        const now = Date.now();
+        const cutoffMs = now - 365 * 24 * 60 * 60 * 1000; // 12 mois
+        const cutoffDate = new Date(cutoffMs);
+        const toPurge = [];
+
+        const recentEntries = snapshot.docs.map(doc => {
             const data = doc.data();
-            // Gérer les deux formats: nouveau (timestamp) et ancien (createdAt)
             const timeField = data.timestamp || data.createdAt;
-            const createdAt = timeField ? timeField.toDate().toISOString() : null;
-            
+            let createdDate = null;
+            if (timeField) {
+                try { createdDate = timeField.toDate ? timeField.toDate() : new Date(timeField); } catch(_) { createdDate = null; }
+            }
+            const isOld = createdDate ? createdDate < cutoffDate : false;
+            if (isOld) toPurge.push(doc.ref);
+            return { doc, data, createdDate };
+        }).filter(entry => !entry.createdDate || entry.createdDate >= cutoffDate);
+
+        // Purge opportuniste (admin vue) : supprimer jusqu'à 10 anciennes commandes par appel
+        if (toPurge.length) {
+            const batchRefs = toPurge.slice(0, 10);
+            try {
+                await Promise.all(batchRefs.map(r => r.delete()));
+                console.log(`[Retention] Purge admin: ${batchRefs.length} commandes >12 mois supprimées.`);
+            } catch (purgeErr) {
+                console.warn('[Retention] Échec purge commandes anciennes (admin):', purgeErr.message);
+            }
+        }
+
+        const orders = recentEntries.map(entry => {
+            const { doc, data, createdDate } = entry;
             return {
                 id: doc.id,
                 name: data.name || 'N/A',
                 email: data.email || 'N/A',
                 phone: data.phone || 'N/A',
-                date: data.date, // Date de retrait
+                date: data.date,
                 seasonId: isAdmin ? (data.seasonId || null) : undefined,
                 seasonName: isAdmin ? (data.seasonName || null) : undefined,
-                // champ supprimé
                 items: data.items,
-                createdAt: createdAt,
+                createdAt: createdDate ? createdDate.toISOString() : null
             };
         }).sort((a, b) => {
-            // Tri par date décroissante (les plus récentes d'abord)
             if (!a.createdAt || !b.createdAt) return 0;
             return new Date(b.createdAt) - new Date(a.createdAt);
         });
 
-        // Succès : renvoyer le tableau d'objets 'orders'
-        res.status(200).json({ orders });
+        res.status(200).json({ orders, retention: { purged: toPurge.length ? Math.min(10, toPurge.length) : 0, cutoff: cutoffDate.toISOString() } });
 
     } catch (error) {
         console.error('Erreur de récupération Firestore (GET):', error);

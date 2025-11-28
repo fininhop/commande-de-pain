@@ -862,27 +862,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     return 0;
             }
         });
-
-        // Générer les cartes
-        let html = '';
+        // Séparer en cours / terminées selon la date de fin de la saison (fallback: date de retrait)
+        const now = new Date();
+        const ongoing = [];
+        const finished = [];
         sortedOrders.forEach(o => {
+            const season = currentSeasons.find(s => s.id === o.seasonId);
+            let isFinished = false;
+            if (season && season.endDate) {
+                try { isFinished = new Date(season.endDate) < now; } catch(e) { isFinished = false; }
+            } else if (o.date) {
+                // fallback si saison manquante: considérer la date de retrait
+                try { isFinished = new Date(o.date) < now; } catch(e) { isFinished = false; }
+            }
+            if (isFinished) finished.push(o); else ongoing.push(o);
+        });
+
+        function cardHtml(o){
             const items = (o.items || []).map(it => {
                 const unit = (typeof it.price === 'number') ? it.price : (NAME_PRICES[it.name] || 0);
                 const line = unit ? `€${(unit * (Number(it.quantity)||0)).toFixed(2)}` : '';
                 return `<div class="item-row"><span>${it.quantity} × ${it.name}</span><span class="text-muted">${line}</span></div>`;
             }).join('');
             const orderTotal = computeOrderTotal(o);
-            
-            
             const dateCmd = o.createdAt ? new Date(o.createdAt).toLocaleDateString('fr-FR', { 
                 year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
             }) : '—';
-            
             const dateRetrait = o.date ? new Date(o.date).toLocaleDateString('fr-FR', { 
                 weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' 
             }) : '—';
-
-            html += `
+            return `
                 <div class="col-12 col-md-6 col-lg-4">
                     <div class="order-card" data-order-id="${o.id}" data-order-date="${o.date || ''}">
                         <div class="order-header">
@@ -899,24 +908,27 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span class="info-label">📍 Retrait</span>
                                     <span class="info-value">${dateRetrait}</span>
                                 </div>
-                                
                             </div>
-                            
                             <div class="items-section">
                                 <div class="items-title">🛒 Articles commandés</div>
                                 ${items}
                             </div>
-                            
                             <div class="order-actions">
                                 <button class="btn btn-sm btn-outline-secondary btn-edit">✏️ Éditer</button>
                                 <button class="btn btn-sm btn-outline-danger btn-delete">🗑️ Supprimer</button>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
-        });
+                </div>`;
+        }
 
+        let html = '';
+        if (ongoing.length) {
+            html += `<div class="col-12"><h5 class="mb-3">🏗️ En cours</h5></div>` + ongoing.map(cardHtml).join('');
+        }
+        if (finished.length) {
+            html += `<div class="col-12 mt-4"><h5 class="mb-3">✅ Terminées</h5></div>` + finished.map(cardHtml).join('');
+        }
         ordersContainer.innerHTML = `<div class="row g-3">${html}</div>`;
 
         // Attacher écouteurs aux boutons

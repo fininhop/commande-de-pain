@@ -58,6 +58,13 @@ async function fetchMyOrders(){
 function renderMyOrders(list){
     const container = document.getElementById('ordersList');
     if (!container) return;
+    // Filtre local supplémentaire (défense en profondeur) : ne garder que 12 derniers mois
+    const cutoffMs = Date.now() - 365 * 24 * 60 * 60 * 1000;
+    list = (list||[]).filter(o => {
+        if (!o.createdAt) return true; // conserver si absence (données anciennes)
+        const t = new Date(o.createdAt).getTime();
+        return t >= cutoffMs;
+    });
     if (!list || list.length === 0) { container.innerHTML = '<div class="alert alert-info">Vous n\'avez pas encore de commandes.</div>'; return; }
     const now = new Date().getTime();
     const upcoming = [];

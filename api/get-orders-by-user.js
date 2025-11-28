@@ -35,31 +35,56 @@ module.exports = async (req, res) => {
         } else {
             snapshot = await global.db.collection('orders').where('email', '==', email).get();
         }
+        const now = Date.now();
+        const cutoffMs = now - 365 * 24 * 60 * 60 * 1000; // 12 mois
+        const cutoffDate = new Date(cutoffMs);
+        const toPurge = [];
 
-        const orders = snapshot.docs.map(doc => {
+        const recentOrders = snapshot.docs.map(doc => {
             const data = doc.data();
-            const timeField = data.timestamp || data.createdAt;
-            const createdAt = timeField ? (timeField.toDate ? timeField.toDate().toISOString() : new Date(timeField).toISOString()) : null;
-            // Champ supprimé
+            const timeField = data.timestamp || data.createdAt; // Firestore Timestamp ou valeur historique
+            let createdDate = null;
+            if (timeField) {
+                try { createdDate = timeField.toDate ? timeField.toDate() : new Date(timeField); } catch(_) { createdDate = null; }
+            }
+            const createdAtIso = createdDate ? createdDate.toISOString() : null;
+            // Déterminer si ancien (>12 mois)
+            const isOld = createdDate ? createdDate < cutoffDate : false;
+            if (isOld) { toPurge.push(doc.ref); }
+            return { doc, data, createdDate, createdAtIso };
+        }).filter(entry => !entry.createdDate || entry.createdDate >= cutoffDate); // garder seulement récents ou sans date
+
+        // Purge opportuniste: supprimer un petit lot d'anciens pour ne pas allonger la latence
+        if (toPurge.length) {
+            const batchRefs = toPurge.slice(0, 3); // limite 3 suppressions par appel
+            try {
+                await Promise.all(batchRefs.map(r => r.delete()));
+                console.log(`[Retention] Purge utilisateur (${email||userId}): ${batchRefs.length} commandes >12 mois supprimées.`);
+            } catch (purgeErr) {
+                console.warn('[Retention] Échec purge commandes anciennes:', purgeErr.message);
+            }
+        }
+
+        const orders = recentOrders.map(entry => {
+            const { doc, data, createdAtIso } = entry;
             return {
                 id: doc.id,
                 name: data.name || 'N/A',
                 email: data.email || 'N/A',
                 phone: data.phone || 'N/A',
                 date: data.date,
-                // champ retiré
                 items: Array.isArray(data.items) ? data.items.map(it => ({
                     ...it,
                     name: typeof it.name === 'string' ? it.name.trim() : it.name
                 })) : [],
-                createdAt
+                createdAt: createdAtIso
             };
         }).sort((a, b) => {
             if (!a.createdAt || !b.createdAt) return 0;
             return new Date(b.createdAt) - new Date(a.createdAt);
         });
 
-        res.status(200).json({ orders });
+        res.status(200).json({ orders, retention: { purged: toPurge.length ? Math.min(3, toPurge.length) : 0, cutoff: cutoffDate.toISOString() } });
 
     } catch (err) {
         console.error('Erreur get-orders-by-user:', err);
