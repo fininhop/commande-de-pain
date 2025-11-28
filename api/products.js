@@ -92,8 +92,16 @@ module.exports = async function handler(req, res) {
       if (price !== undefined) update.price = Number(price);
       if (unitWeight !== undefined) update.unitWeight = Number(unitWeight);
       if (active !== undefined) update.active = !!active;
-      if (category !== undefined) update.category = String(category || '').trim();
-      if (sortOrder !== undefined) update.sortOrder = Number(sortOrder) || 0;
+      if (category !== undefined) {
+        const cat = String(category || '').trim();
+        if (!cat) return res.status(400).json({ ok: false, error: 'Catégorie requise' });
+        update.category = cat;
+      }
+      if (sortOrder !== undefined) {
+        const so = Number(sortOrder);
+        if (!Number.isFinite(so)) return res.status(400).json({ ok: false, error: 'Position d\'affichage invalide' });
+        update.sortOrder = so;
+      }
       await col.doc(id).set(update, { merge: true });
       return res.status(200).json({ ok: true });
     }

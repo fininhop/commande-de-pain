@@ -237,13 +237,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const price = Number(document.getElementById('prodPrice').value);
                 const unitWeight = Number(document.getElementById('prodUnitWeight').value);
                 const category = (document.getElementById('prodCategory')?.value || '').trim();
-                let sortOrder = Number(document.getElementById('prodSortOrder')?.value);
-                if (Number.isNaN(sortOrder)) sortOrder = 0;
+                const sortOrderRaw = document.getElementById('prodSortOrder')?.value;
+                const sortOrder = parseInt(sortOrderRaw, 10);
                 if (!name || Number.isNaN(price) || Number.isNaN(unitWeight)) {
                     return showMessageModal('Champs requis', 'Veuillez renseigner correctement les champs.', 'warning');
                 }
                 if (!category) {
                     return showMessageModal('Catégorie requise', 'Veuillez renseigner une catégorie pour le produit.', 'warning');
+                }
+                if (Number.isNaN(sortOrder)) {
+                    return showMessageModal('Position requise', 'Veuillez saisir une position d\'affichage valide (entier).', 'warning');
                 }
                 const token = localStorage.getItem('adminToken');
                 const resp = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ name, price, unitWeight, active: true, category, sortOrder }) });
@@ -294,14 +297,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const unitWeight = Number(productUnitWeightInput.value);
                 const active = !!productActiveInput.checked;
                 const category = (productCategoryInput?.value || '').trim();
-                let sortOrder = Number(productSortOrderInput?.value);
-                if (Number.isNaN(sortOrder)) sortOrder = 0;
+                const sortOrderRaw = productSortOrderInput?.value;
+                const sortOrder = parseInt(sortOrderRaw, 10);
                 if (!name || Number.isNaN(price) || Number.isNaN(unitWeight)) {
                     showToast('Champs requis', 'Vérifiez nom, prix et poids', 'warning');
                     return;
                 }
                 if (!category) {
                     showToast('Catégorie requise', 'Veuillez renseigner une catégorie pour le produit', 'warning');
+                    return;
+                }
+                if (Number.isNaN(sortOrder)) {
+                    showToast('Position requise', 'Veuillez saisir une position d\'affichage valide (entier).', 'warning');
                     return;
                 }
                 const token = localStorage.getItem('adminToken');
