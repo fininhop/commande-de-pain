@@ -57,7 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const grid = document.getElementById('productsGrid');
             if (!grid) return;
             grid.innerHTML = '';
-            // Group products by category for admin view
+            // Group products by category for admin view and render as accordion
+            function slugify(s){ return String(s||'autres').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,''); }
             const byCat = new Map();
             currentProducts.forEach(p => {
                 const catName = (p.category || 'Autres').trim() || 'Autres';
@@ -65,15 +66,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 byCat.get(catName).push(p);
             });
 
+            const accId = 'adminProductsAccordion';
+            const accordion = document.createElement('div');
+            accordion.className = 'accordion';
+            accordion.id = accId;
+
             const sortedCats = Array.from(byCat.entries()).sort((a,b)=> String(a[0]).localeCompare(String(b[0])));
-            sortedCats.forEach(([catName, list]) => {
-                const section = document.createElement('div');
-                section.className = 'col-12';
-                const title = document.createElement('h5');
-                title.className = 'mt-2 mb-2 text-secondary';
-                title.textContent = catName;
-                const row = document.createElement('div');
-                row.className = 'row g-3';
+            sortedCats.forEach(([catName, list], idxCat) => {
+                list.sort((a,b)=>{
+                    const sa = (typeof a.sortOrder==='number')?a.sortOrder:0;
+                    const sb = (typeof b.sortOrder==='number')?b.sortOrder:0;
+                    if (sa !== sb) return sa - sb;
+                    return String(a.name||'').localeCompare(String(b.name||''));
+                });
+                const slug = slugify(catName) + '-' + idxCat;
+                const headingId = `admin-head-${slug}`;
+                const collapseId = `admin-collapse-${slug}`;
+                const item = document.createElement('div');
+                item.className = 'accordion-item';
+                item.innerHTML = `
+                    <h2 class="accordion-header" id="${headingId}">
+                        <button class="accordion-button ${idxCat>0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="${idxCat===0}" aria-controls="${collapseId}">
+                            ${catName}
+                        </button>
+                    </h2>
+                    <div id="${collapseId}" class="accordion-collapse collapse ${idxCat===0 ? 'show' : ''}" aria-labelledby="${headingId}" data-bs-parent="#${accId}">
+                        <div class="accordion-body">
+                            <div class="row g-3"></div>
+                        </div>
+                    </div>`;
+                const row = item.querySelector('.row');
                 list.forEach(p => {
                     const col = document.createElement('div');
                     col.className = 'col-12 col-md-6';
@@ -131,24 +153,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     btnDelete.setAttribute('data-action', 'delete');
                     btnDelete.setAttribute('data-id', String(p.id));
                     btnDelete.textContent = 'Supprimer';
-                    actions.appendChild(btnUp);
-                    actions.appendChild(btnDown);
-                    actions.appendChild(btnEdit);
-                    actions.appendChild(btnDelete);
                     body.appendChild(nameEl);
                     body.appendChild(priceEl);
                     body.appendChild(weightEl);
                     body.appendChild(metaRow);
                     body.appendChild(statusRow);
+                    actions.appendChild(btnUp);
+                    actions.appendChild(btnDown);
+                    actions.appendChild(btnEdit);
+                    actions.appendChild(btnDelete);
                     body.appendChild(actions);
                     card.appendChild(body);
                     col.appendChild(card);
                     row.appendChild(col);
                 });
-                section.appendChild(title);
-                section.appendChild(row);
-                grid.appendChild(section);
+                accordion.appendChild(item);
             });
+
+            grid.appendChild(accordion);
 
             async function swapSortOrderWithinCategory(catName, idA, idB) {
                 const prodA = currentProducts.find(p=>p.id===idA);
@@ -169,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch(e){ return false; }
             }
 
-            grid.querySelectorAll('button').forEach(btn => {
+            grid.querySelectorAll('button[data-action]').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = e.currentTarget.getAttribute('data-id');
                     const action = e.currentTarget.getAttribute('data-action');

@@ -205,7 +205,7 @@ function showToast(title, message, type = 'info') {
     toastBody.textContent = message;
     
     // Reset classes
-    toastHeader.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info', 'text-white');
+        // Group by category and render as a Bootstrap accordion
     
     // Apply type-specific styling
     if (type === 'success') {
@@ -213,49 +213,62 @@ function showToast(title, message, type = 'info') {
     } else if (type === 'error' || type === 'danger') {
         toastHeader.classList.add('bg-danger', 'text-white');
     } else if (type === 'warning') {
-        toastHeader.classList.add('bg-warning');
-    } else {
-        toastHeader.classList.add('bg-info', 'text-white');
-    }
-    
-    const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
-    toast.show();
-}
+        // Create accordion container
+        const accordionId = 'clientProductsAccordion';
+        const accordion = document.createElement('div');
+        accordion.className = 'accordion';
+        accordion.id = accordionId;
 
-// Fonction pour modifier la quantité via les boutons +/-
-window.changeQuantity = function(productId, change) {
-    const input = document.getElementById(productId);
-    const currentValue = parseInt(input.value) || 0;
-    const newValue = Math.max(0, currentValue + change);
-    input.value = newValue;
-    updateTotal();
-};
+        Array.from(byCategory.entries())
+            .sort((a,b)=> String(a[0]).localeCompare(String(b[0])))
+            .forEach(([cat, list], index) => {
+                // sort inside category by sortOrder then name
+                list.sort((a,b)=>{
+                    const sa = (typeof a.sortOrder==='number')?a.sortOrder:0;
+                    const sb = (typeof b.sortOrder==='number')?b.sortOrder:0;
+                    if (sa !== sb) return sa - sb;
+                    return String(a.name||'').localeCompare(String(b.name||''));
+                });
+                const slug = slugify(cat) + '-' + index;
+                const headingId = `heading-${slug}`;
+                const collapseId = `collapse-${slug}`;
+                const item = document.createElement('div');
+                item.className = 'accordion-item';
+                item.innerHTML = `
+                    <h2 class="accordion-header" id="${headingId}">
+                        <button class="accordion-button ${index>0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="${index===0}" aria-controls="${collapseId}">
+                            ${cat}
+                        </button>
+                    </h2>
+                    <div id="${collapseId}" class="accordion-collapse collapse ${index===0 ? 'show' : ''}" aria-labelledby="${headingId}" data-bs-parent="#${accordionId}">
+                        <div class="accordion-body">
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3"></div>
+                        </div>
+                    </div>`;
+                const row = item.querySelector('.row');
+                list.forEach(p => {
+                    const id = `prod_${p.id}`;
+                    const colDiv = document.createElement('div');
+                    colDiv.className = 'col';
+                    colDiv.innerHTML = `
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-title fw-bold text-primary mb-2">${p.name}</h6>
+                                <p class="card-text text-success fw-semibold fs-5 mb-1">€ ${Number(p.price).toFixed(2)}</p>
+                                <p class="text-muted small mb-3">${Number(p.unitWeight).toFixed(3)} kg / unité</p>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" onclick="changeQuantity('${id}', -1)" style="width:36px;height:36px;padding:0;">−</button>
+                                    <input type="number" id="${id}" data-name="${p.name}" data-price="${p.price}" data-unitweight="${p.unitWeight}" class="form-control form-control-sm text-center mx-2" value="0" min="0" style="max-width:70px;" oninput="updateTotal()" />
+                                    <button type="button" class="btn btn-sm btn-outline-success rounded-circle" onclick="changeQuantity('${id}', 1)" style="width:36px;height:36px;padding:0;">+</button>
+                                </div>
+                            </div>
+                        </div>`;
+                    row.appendChild(colDiv);
+                });
+                accordion.appendChild(item);
+            });
 
-// Fonction de mise à jour du total
-window.updateTotal = function() {
-    let totalItems = 0;
-    let totalPrice = 0;
-    const items = [];
-
-    document.querySelectorAll('#productGrid input[type="number"]').forEach(input => {
-        const quantity = parseInt(input.value) || 0;
-        if (quantity > 0) {
-            const name = input.getAttribute('data-name');
-            const price = Number(input.getAttribute('data-price')) || 0;
-            totalItems += quantity;
-            totalPrice += quantity * price;
-            items.push({ name, quantity, price, total: quantity * price });
-        }
-    });
-
-    document.getElementById('total-price').textContent = totalPrice.toFixed(2);
-
-    const basketInfo = document.getElementById('basket-info-message');
-    if (totalItems > 0) {
-        basketInfo.innerHTML = `${totalItems} produit(s) dans votre panier`;
-        basketInfo.classList.remove('alert-warning');
-        basketInfo.classList.add('alert-info');
-    } else {
+        productGrid.appendChild(accordion);
         basketInfo.innerHTML = 'Aucun produit dans votre panier.';
         basketInfo.classList.remove('alert-info');
         basketInfo.classList.add('alert-warning');
