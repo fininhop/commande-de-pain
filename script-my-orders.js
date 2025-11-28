@@ -56,7 +56,7 @@ async function fetchMyOrders(){
 }
 
 function renderMyOrders(list){
-    const container = document.getElementById('myOrdersContainer');
+    const container = document.getElementById('ordersList');
     if (!container) return;
     if (!list || list.length === 0) { container.innerHTML = '<div class="alert alert-info">Vous n\'avez pas encore de commandes.</div>'; return; }
     const html = list.map(o => {
