@@ -100,7 +100,17 @@ function renderMyOrders(list){
 
     let html = '';
     if (upcoming.length) {
-        html += `<div class="mb-2"><h5 class="mb-0">À venir</h5><small class="text-muted">Commandes encore modifiables selon règles</small></div>`;
+        html += `<div class="mb-2">
+            <h5 class="mb-0">À venir</h5>
+            <div class="small text-muted">Commandes encore modifiables selon règles</div>
+            <div class="alert alert-info py-2 mt-2 mb-2 small">
+                <ul class="mb-0 ps-3">
+                    <li>Annulation possible jusqu'à 48h avant la fin de la saison (date de retrait).</li>
+                    <li>Passé ce délai, l'annulation n'est plus possible.</li>
+                    <li>Les commandes passées ne sont pas modifiables.</li>
+                </ul>
+            </div>
+        </div>`;
         html += upcoming.map(o => cardHtml(o, false)).join('');
     }
     if (past.length) {
