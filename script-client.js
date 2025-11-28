@@ -45,6 +45,7 @@ let CLIENT_PRODUCTS = [];
 
 // Variables globales pour les saisons
 let availableSeasons = [];
+let orderingEnabled = false;
 
 // Fonction pour charger les saisons disponibles
 async function loadSeasons() {
@@ -56,19 +57,27 @@ async function loadSeasons() {
             availableSeasons = result.seasons;
             populateSeasonSelect();
             if (!availableSeasons || availableSeasons.length === 0) {
-                setOrderingAvailability(false, 'Commande momentanément indisponible. Aucune saison n\'est créée. Veuillez réessayer plus tard.');
+                orderingEnabled = false;
+                setOrderingAvailability(false, 'Aucune livraison est prévue pour l\'instant. Restez connecté pour plus d\'informations.');
+                const productGrid = document.getElementById('productGrid');
+                if (productGrid) {
+                    productGrid.innerHTML = '<div class="alert alert-warning text-center">Aucune livraison est prévue pour l\'instant. Restez connecté pour plus d\'informations.</div>';
+                }
             } else {
+                orderingEnabled = true;
                 setOrderingAvailability(true);
             }
         } else {
             console.error('Erreur chargement saisons:', result.message);
             showToast('Erreur', 'Impossible de charger les saisons disponibles.', 'error');
-            setOrderingAvailability(false, 'Commande momentanément indisponible (erreur de chargement des saisons).');
+            orderingEnabled = false;
+            setOrderingAvailability(false, 'Aucune livraison est prévue pour l\'instant (erreur de chargement des saisons).');
         }
     } catch (error) {
         console.error('Erreur réseau saisons:', error);
         showToast('Erreur réseau', 'Impossible de charger les saisons.', 'error');
-        setOrderingAvailability(false, 'Commande momentanément indisponible (erreur réseau).');
+        orderingEnabled = false;
+        setOrderingAvailability(false, 'Aucune livraison est prévue pour l\'instant (erreur réseau).');
     }
 }
 
@@ -332,13 +341,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Charger les saisons disponibles
-    loadSeasons().finally(() => { try { hidePageLoader(); } catch(e){} });
+    loadSeasons().finally(() => {
+        try { hidePageLoader(); } catch(e){}
+        // Ne charger les produits que si une saison est disponible
+        if (orderingEnabled) {
+            loadClientProducts();
+        }
+    });
 
     const form = document.getElementById('clientOrderForm');
     const statusMessage = document.getElementById('statusMessage');
 
-    // Générer dynamiquement les cartes de produits
-    loadClientProducts();
+    // Générer dynamiquement les cartes de produits (déplacé après vérification saisons)
 
     // Initialisation du total
     updateTotal();
