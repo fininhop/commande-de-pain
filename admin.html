@@ -13,6 +13,8 @@
     <style>
         body { background:var(--page); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
         .container { max-width: 950px; margin-top: 0; }
+        /* Centrage du contenu interne des sections pour correspondre au layout global */
+        .content-wrap { max-width: 950px; margin: 0 auto; }
         .order-row { cursor: default; }
         .admin-controls { margin-bottom: 12px; }
         .btn-primary { background: linear-gradient(45deg,#3498db,#2980b9); border: none; color: #fff; transition: .3s; }
@@ -160,6 +162,7 @@
                     </h2>
                     <div id="collapseOrders" class="accordion-collapse collapse show" aria-labelledby="headingOrders" data-bs-parent="#adminAccordion">
                         <div class="accordion-body">
+                            <div class="content-wrap">
                             <div class="mb-3">
                                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                                     <h4 class="mb-0">📦 Commandes</h4>
@@ -217,6 +220,7 @@
                                 </div>
                             </div>
                             <div id="ordersContainer" class="row g-3"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -230,11 +234,13 @@
                     </h2>
                     <div id="collapseSeasons" class="accordion-collapse collapse" aria-labelledby="headingSeasons" data-bs-parent="#adminAccordion">
                         <div class="accordion-body">
+                            <div class="content-wrap">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="mb-0">🌸 Gestion des Saisons</h4>
                                 <button id="newSeasonBtn" class="btn btn-sm btn-primary">➕ Nouvelle saison</button>
                             </div>
                             <div id="seasonsContainer" class="row g-3"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
