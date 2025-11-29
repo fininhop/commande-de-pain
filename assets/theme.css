@@ -275,6 +275,17 @@ html[data-theme="dark"] .table.table-sm td, html[data-theme="dark"] .table.table
 .popover-header { background-color: var(--panel) !important; color: var(--text) !important; border-bottom-color: var(--border) !important; }
 .popover-body { background-color: var(--card) !important; color: var(--text) !important; }
 
+/* Bootstrap spinners themed for dark mode */
+.spinner-border, .spinner-grow { color: var(--primary) !important; }
+.spinner-border { border-color: var(--border) !important; border-top-color: var(--primary) !important; }
+.spinner-grow { background-color: var(--primary) !important; }
+
+/* Generic overlays/loaders safety */
+.overlay, .loading, .list-loading {
+  background: rgba(0,0,0,0.4) !important;
+  color: var(--text) !important;
+}
+
 /* Improve badge contrast for info/warning in dark */
 html[data-theme="dark"] .badge.bg-info { color: #0b2630 !important; }
 html[data-theme="dark"] .badge.bg-warning { color: #332600 !important; }
