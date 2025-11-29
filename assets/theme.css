@@ -34,11 +34,23 @@ body {
   color: var(--text) !important;
 }
 
+/* Ensure headings and key titles are readable in dark mode */
+h1, h2, h3, h4, h5, h6,
+.display-1, .display-2, .display-3, .display-4, .display-5, .display-6,
+.page-title, .section-title, .card-title, .offcanvas-title {
+  color: var(--text) !important;
+}
+
 .card, .form-container, .order-card, .season-card, .page-header, .app-header,
 .items-section, .total-section, .category-header, .offcanvas-header, .modal-content {
   background: var(--card) !important;
   color: var(--text) !important;
   border-color: var(--border) !important;
+}
+
+/* Section-specific readability */
+.page-header *, .items-section *, .total-section *, .category-header * {
+  color: var(--text) !important;
 }
 
 hr, .border, .accordion-item, .list-group-item, .table, .table > :not(caption) > * > * {
