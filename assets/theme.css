@@ -321,6 +321,8 @@ html[data-theme="dark"] .text-muted { color: rgba(229,231,235,0.70) !important; 
 .welcome-text {
   color: var(--text) !important;
 }
+/* Admin season dates readability */
+.date-value { color: var(--text) !important; }
 
 /* Season header block should not be white in dark */
 .season-header { background: var(--panel) !important; color: var(--text) !important; border-bottom: 1px solid var(--border) !important; }
