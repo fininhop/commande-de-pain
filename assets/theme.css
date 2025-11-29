@@ -205,11 +205,13 @@ html[data-theme="dark"] .alert-secondary {
 .table-striped > tbody > tr:nth-of-type(odd) { --bs-table-accent-bg: var(--panel) !important; }
 
 /* Offcanvas and modal content */
-.offcanvas, .offcanvas-body, .offcanvas-header, .modal-content, .modal-header, .modal-footer {
+/* Offcanvas and modal theming */
+.offcanvas, .offcanvas-body, .modal-content, .modal-header, .modal-footer {
   background-color: var(--card) !important;
   color: var(--text) !important;
   border-color: var(--border) !important;
 }
+.offcanvas-header { background-color: var(--panel) !important; color: var(--text) !important; border-bottom: 1px solid var(--border) !important; }
 
 /* Modal title and close button contrast */
 .modal-header .modal-title { color: var(--text) !important; }
@@ -249,6 +251,31 @@ html[data-theme="dark"] .page-subtitle, html[data-theme="dark"] .form-text {
 .table-responsive { background-color: var(--card) !important; }
 /* Slightly lighten small table text in dark for readability */
 html[data-theme="dark"] .table.table-sm td, html[data-theme="dark"] .table.table-sm th { color: rgba(229,231,235,0.88) !important; }
+
+/* Dropdowns, tooltips, and popovers */
+.dropdown-menu { background-color: var(--card) !important; color: var(--text) !important; border-color: var(--border) !important; }
+.dropdown-item { color: var(--text) !important; }
+.dropdown-item:hover, .dropdown-item:focus { background-color: var(--panel) !important; color: var(--text) !important; }
+.tooltip .tooltip-inner { background-color: var(--panel) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+.tooltip .tooltip-arrow::before { border-top-color: var(--panel) !important; border-bottom-color: var(--panel) !important; }
+.popover { background-color: var(--card) !important; color: var(--text) !important; border-color: var(--border) !important; }
+.popover-header { background-color: var(--panel) !important; color: var(--text) !important; border-bottom-color: var(--border) !important; }
+.popover-body { background-color: var(--card) !important; color: var(--text) !important; }
+
+/* Improve badge contrast for info/warning in dark */
+html[data-theme="dark"] .badge.bg-info { color: #0b2630 !important; }
+html[data-theme="dark"] .badge.bg-warning { color: #332600 !important; }
+
+/* Arrow indicator styling in dark mode */
+html[data-theme="dark"] .arrow-indicator { background-color: var(--card) !important; border-color: var(--border) !important; box-shadow: none !important; color: var(--text) !important; }
+
+/* Admin order cards */
+.order-card { background: var(--card); border: 1px solid var(--border); border-radius: .5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+.order-card .order-header { background: var(--panel); color: var(--text); border-bottom: 1px solid var(--border); padding: .75rem 1rem; border-top-left-radius: .5rem; border-top-right-radius: .5rem; }
+.order-card .order-title { color: var(--text); margin: 0; }
+.order-card .order-date { color: var(--muted); margin: 0; }
+.order-card .order-body { background: var(--card); color: var(--text); padding: 1rem; }
+.order-card .items-title { color: var(--text); }
 
 /* Order card header in dark */
 .order-card .order-header {

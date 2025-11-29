@@ -11,7 +11,7 @@
     <link href="assets/loader.css" rel="stylesheet">
     <link href="assets/theme.css" rel="stylesheet">
     <style>
-        body { background:#fff; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+        body { background:var(--page); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
         .container { max-width: 950px; margin-top: 24px; }
         .order-row { cursor: default; }
         .admin-controls { margin-bottom: 12px; }
@@ -27,6 +27,9 @@
         .order-title { font-weight: 600; color: #2d3748; margin: 0; font-size: 1.1rem; }
         .order-date { color: #718096; font-size: 0.9rem; margin: 4px 0 0 0; }
         .order-body { padding: 16px; }
+            .order-title { font-weight: 600; color: var(--text); margin: 0; font-size: 1.1rem; }
+            .order-date { color: var(--muted); font-size: 0.9rem; margin: 4px 0 0 0; }
+            .items-title { font-weight: 600; color: var(--text); margin-bottom: 8px; font-size: 0.9rem; }
         .order-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
         .info-item { display: flex; flex-direction: column; gap: 4px; }
         .info-label { font-weight: 600; color: #4a5568; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -35,6 +38,7 @@
         .items-title { font-weight: 600; color: #2d3748; margin-bottom: 8px; font-size: 0.9rem; }
         .item-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
         .item-row:last-child { border-bottom: none; }
+            .items-title { font-weight: 600; color: var(--text); margin-bottom: 8px; font-size: 0.9rem; }
         .order-actions { display: flex; gap: 8px; justify-content: flex-end; }
         .badge { font-size: 0.8rem; padding: 4px 8px; }
         .season-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #e9ecef; }

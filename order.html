@@ -11,13 +11,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#fff; padding:20px; padding-bottom:90px; line-height:1.6; min-height:100vh; }
-        .form-container { width:100%; max-width:950px; margin:0 auto; background:#fff; padding:1.5rem; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border:1px solid #e9ecef; }
+        body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:var(--page); padding:20px; padding-bottom:90px; line-height:1.6; min-height:100vh; }
+        .form-container { width:100%; max-width:950px; margin:0 auto; background:var(--card); padding:1.5rem; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); border:1px solid var(--border); }
         #clientOrderForm { width:100%; }
         h1 { color:#2c3e50; font-size:26px; font-weight:700; }
         .form-group { margin-bottom:25px; }
         .form-group label { display:block; font-weight:600; margin-bottom:8px; color:#2d3748; font-size:14px; letter-spacing:.2px; }
-        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], textarea, select, .quantity-control input { width:100%; padding:12px; border:1px solid #e9ecef; border-radius:8px; font-size:14px; transition:border-color .2s, box-shadow .2s; background:#fff; }
+        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], textarea, select, .quantity-control input { width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-size:14px; transition:border-color .2s, box-shadow .2s; background:var(--card); }
         input:focus, textarea:focus { outline:none; border-color:#3498db; }
         .product-section { background:transparent; padding:0; border-radius:8px; margin:20px 0; }
         .basket-info { padding:12px; border-radius:10px; margin-bottom:20px; text-align:center; font-weight:500; border:1px solid; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
@@ -36,7 +36,7 @@
         .header-btn-outline { padding:8px 16px; border:2px solid #3498db; border-radius:6px; font-size:14px; font-weight:500; cursor:pointer; text-decoration:none; text-align:center; transition:.3s; display:flex; align-items:center; justify-content:center; gap:6px; background:transparent; color:#3498db; }
         .header-btn-outline:hover { background:#3498db; color:#fff; transform:translateY(-1px); box-shadow:0 3px 10px rgba(0,0,0,0.15); }
         .submit-info { background:#e8f5e8; padding:14px; border-radius:10px; margin-bottom:16px; color:#27ae60; font-weight:500; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
-        .total-section { background:#f8f9fa; padding:16px; border-radius:12px; margin:20px 0; text-align:right; border:1px solid #e9ecef; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+        .total-section { background:var(--panel); padding:16px; border-radius:12px; margin:20px 0; text-align:right; border:1px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,0.06); }
         .total-amount { font-size:20px; font-weight:700; color:#2c3e50; }
         .status-message { padding:10px; border-radius:4px; margin-top:20px; font-weight:bold; text-align:center; }
         .success { background-color:#d4edda; color:#155724; }
@@ -54,7 +54,7 @@
             overflow:hidden; 
             box-shadow:0 2px 8px rgba(0,0,0,0.08);
             margin-bottom:12px;
-            background:#fff;
+            background:var(--card);
         }
         #productGrid .accordion-button { 
             background:linear-gradient(45deg,#f8f9fa,#e9ecef);
@@ -66,7 +66,7 @@
         }
         #productGrid .accordion-body { padding:16px; }
         /* Offcanvas panier modernisé visuellement */
-        .offcanvas-header { border-bottom:1px solid #e9ecef; }
+        .offcanvas-header { border-bottom:1px solid var(--border); }
         #basketItemsList .list-group-item { border:1px solid #e9ecef; border-radius:8px; margin-bottom:8px; }
         #floatingBasket { box-shadow:0 -4px 16px rgba(0,0,0,0.12); }
         /* Catégories produits (hover/focus) */
@@ -89,7 +89,7 @@
             border-color:#91caff;
             box-shadow:0 0 0 0.2rem rgba(13,110,253,.25);
         }
-        .category-header .category-toggle { color:#0d3b66; }
+        .category-header .category-toggle { color: var(--text); }
         .category-header .category-toggle:hover { text-decoration:underline; }
         .category-header button[data-role="toggle-arrow"] { transition:background .25s, transform .25s; }
         .category-header button[data-role="toggle-arrow"]:hover { background:#0d6efd; color:#fff; }
