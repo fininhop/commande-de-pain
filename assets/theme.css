@@ -285,6 +285,12 @@ html[data-theme="dark"] .table.table-sm td, html[data-theme="dark"] .table.table
   background: rgba(0,0,0,0.4) !important;
   color: var(--text) !important;
 }
+/* Dark mode: aucun fond blanc/opaque pour les loaders génériques */
+html[data-theme="dark"] .overlay,
+html[data-theme="dark"] .loading,
+html[data-theme="dark"] .list-loading {
+  background: transparent !important;
+}
 
 /* Improve badge contrast for info/warning in dark */
 html[data-theme="dark"] .badge.bg-info { color: #0b2630 !important; }
