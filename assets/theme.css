@@ -55,6 +55,8 @@ hr, .border, .accordion-item, .list-group-item, .table, .table > :not(caption) >
   margin: 16px auto 24px auto;
   box-shadow: 0 4px 10px rgba(0,0,0,0.08);
   border: 1px solid var(--border);
+  position: relative;
+  z-index: 0;
 }
 
 .app-title {
@@ -81,6 +83,28 @@ html[data-theme="dark"] .btn-outline-primary:hover {
 /* Toast header contrast in dark */
 html[data-theme="dark"] .toast .toast-header {
   background: #1f2a44 !important; color: #e5e7eb !important;
+}
+
+/* Ensure interactive areas receive clicks */
+.accordion, .accordion-item, .accordion-button, .accordion-body, .card, .card-body, .order-card {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+/* Decorative elements should not block clicks */
+.category-header [data-role="toggle-arrow"],
+.order-card .order-header .badge {
+  pointer-events: none;
+}
+
+/* Floating UI like toasts should stack above without blocking page globally */
+.toast { z-index: 1060; }
+
+/* Fix Bootstrap accordion button layering in dark */
+.accordion-button {
+  background: var(--panel) !important;
+  color: var(--text) !important;
 }
 
 /* Accordion specific fixes */
