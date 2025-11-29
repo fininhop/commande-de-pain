@@ -13,10 +13,11 @@
     <style>
         body { background:var(--page); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
         .container { max-width: 950px; margin-top: 0; }
-        /* Centrage du contenu interne des sections pour correspondre au layout global */
-        .content-wrap { max-width: 950px; margin: 0 auto; }
-        /* Forcer le centrage des conteneurs de listes */
-        #ordersContainer, #seasonsContainer { max-width: 950px; margin-left: auto; margin-right: auto; }
+        /* Centrage + padding aligné avec Bootstrap pour éviter le décalage des gutters */
+        .content-wrap { max-width: 950px; margin: 0 auto; padding-left: 12px; padding-right: 12px; }
+        @media (min-width: 576px) { .content-wrap { padding-left: 16px; padding-right: 16px; } }
+        @media (min-width: 768px) { .content-wrap { padding-left: 24px; padding-right: 24px; } }
+        @media (min-width: 992px) { .content-wrap { padding-left: 24px; padding-right: 24px; } }
         .order-row { cursor: default; }
         .admin-controls { margin-bottom: 12px; }
         .btn-primary { background: linear-gradient(45deg,#3498db,#2980b9); border: none; color: #fff; transition: .3s; }
@@ -221,7 +222,7 @@
                                     </table>
                                 </div>
                             </div>
-                            <div id="ordersContainer" class="row g-3"></div>
+                             <div id="ordersContainer" class="row g-3"></div>
                             </div>
                         </div>
                     </div>
@@ -241,7 +242,7 @@
                                 <h4 class="mb-0">🌸 Gestion des Saisons</h4>
                                 <button id="newSeasonBtn" class="btn btn-sm btn-primary">➕ Nouvelle saison</button>
                             </div>
-                            <div id="seasonsContainer" class="row g-3"></div>
+                             <div id="seasonsContainer" class="row g-3"></div>
                             </div>
                         </div>
                     </div>
