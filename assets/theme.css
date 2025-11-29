@@ -66,6 +66,11 @@ hr, .border, .accordion-item, .list-group-item, .table, .table > :not(caption) >
 }
 
 .app-actions .btn { white-space: nowrap; }
+/* Make header actions wrap on small screens to avoid horizontal scroll */
+.app-actions { flex-wrap: wrap; row-gap: .5rem; }
+@media (max-width: 576px) {
+  .app-actions .btn { flex: 1 1 auto; }
+}
 
 /* Buttons should keep Bootstrap look but adapt colors in dark */
 html[data-theme="dark"] .btn-outline-primary {
@@ -130,6 +135,22 @@ html[data-theme="dark"] .accordion-button:not(.collapsed) {
   color: var(--text) !important;
   border-color: rgba(255, 193, 7, 0.35) !important;
 }
+/* Additional alerts for dark mode consistency */
+.alert-success {
+  background-color: rgba(25, 135, 84, 0.12) !important;
+  color: var(--text) !important;
+  border-color: rgba(25, 135, 84, 0.35) !important;
+}
+.alert-danger {
+  background-color: rgba(220, 53, 69, 0.12) !important;
+  color: var(--text) !important;
+  border-color: rgba(220, 53, 69, 0.35) !important;
+}
+.alert-secondary {
+  background-color: rgba(108, 117, 125, 0.12) !important;
+  color: var(--text) !important;
+  border-color: rgba(108, 117, 125, 0.35) !important;
+}
 html[data-theme="dark"] .alert-info {
   background-color: rgba(109, 211, 255, 0.12) !important;
   border-color: rgba(109, 211, 255, 0.35) !important;
@@ -137,6 +158,18 @@ html[data-theme="dark"] .alert-info {
 html[data-theme="dark"] .alert-warning {
   background-color: rgba(255, 209, 102, 0.12) !important;
   border-color: rgba(255, 209, 102, 0.35) !important;
+}
+html[data-theme="dark"] .alert-success {
+  background-color: rgba(87, 195, 139, 0.12) !important;
+  border-color: rgba(87, 195, 139, 0.35) !important;
+}
+html[data-theme="dark"] .alert-danger {
+  background-color: rgba(255, 107, 107, 0.12) !important;
+  border-color: rgba(255, 107, 107, 0.35) !important;
+}
+html[data-theme="dark"] .alert-secondary {
+  background-color: rgba(138, 147, 162, 0.12) !important;
+  border-color: rgba(138, 147, 162, 0.35) !important;
 }
 
 /* Badges: ensure contrast */
