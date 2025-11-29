@@ -429,13 +429,14 @@ function updateCategoryCounts(){
         const collapseEl = section.querySelector('.collapse');
         const countBadge = section.querySelector('[data-role="category-count"]');
         if (!collapseEl || !countBadge) return;
-        let count = 0;
-        collapseEl.querySelectorAll('input[type="number"]').forEach(inp => {
-            count += (parseInt(inp.value) || 0);
-        });
-        countBadge.textContent = String(count);
-        countBadge.classList.toggle('bg-primary', count > 0);
-        countBadge.classList.toggle('bg-secondary', count === 0);
+        const inputs = Array.from(collapseEl.querySelectorAll('input[type="number"]'));
+        const totalOptions = inputs.length;
+        let selected = 0;
+        inputs.forEach(inp => { selected += (parseInt(inp.value) || 0); });
+        countBadge.textContent = `${selected}/${totalOptions}`;
+        countBadge.title = `Sélectionnés / Options disponibles`;
+        countBadge.classList.toggle('bg-primary', selected > 0);
+        countBadge.classList.toggle('bg-secondary', selected === 0);
     });
 }
 

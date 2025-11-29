@@ -82,3 +82,44 @@ html[data-theme="dark"] .btn-outline-primary:hover {
 html[data-theme="dark"] .toast .toast-header {
   background: #1f2a44 !important; color: #e5e7eb !important;
 }
+
+/* Accordion specific fixes */
+.accordion-button, .accordion-body, .card-header {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+html[data-theme="dark"] .accordion-item {
+  background: var(--card) !important;
+}
+html[data-theme="dark"] .accordion-button:not(.collapsed) {
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06) !important;
+}
+
+/* Alerts adapt to theme */
+.alert-info {
+  background-color: rgba(13, 202, 240, 0.12) !important;
+  color: var(--text) !important;
+  border-color: rgba(13, 202, 240, 0.35) !important;
+}
+.alert-warning {
+  background-color: rgba(255, 193, 7, 0.12) !important;
+  color: var(--text) !important;
+  border-color: rgba(255, 193, 7, 0.35) !important;
+}
+html[data-theme="dark"] .alert-info {
+  background-color: rgba(109, 211, 255, 0.12) !important;
+  border-color: rgba(109, 211, 255, 0.35) !important;
+}
+html[data-theme="dark"] .alert-warning {
+  background-color: rgba(255, 209, 102, 0.12) !important;
+  border-color: rgba(255, 209, 102, 0.35) !important;
+}
+
+/* Badges: ensure contrast */
+.badge.bg-secondary { background-color: #6c757d !important; color: #fff !important; }
+.badge.bg-primary { background-color: var(--primary) !important; color: var(--primary-contrast) !important; }
+
+/* Map Bootstrap utility backgrounds to theme to avoid white in dark */
+.bg-light { background-color: var(--panel) !important; }
+.bg-white { background-color: var(--card) !important; }
+.text-dark { color: var(--text) !important; }
