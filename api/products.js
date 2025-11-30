@@ -1,22 +1,52 @@
+// Runtime check for required environment variables
+const requiredVars = ['FIREBASE_SERVICE_ACCOUNT', 'ADMIN_TOKEN'];
+requiredVars.forEach(v => {
+  if (!process.env[v]) {
+    console.error(`[products.js] Missing env variable: ${v}`);
+  }
+});
 const admin = require('firebase-admin');
 
 if (!admin.apps.length) {
   try {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+      console.error('[products.js] FIREBASE_SERVICE_ACCOUNT is missing from environment variables');
+      throw new Error('FIREBASE_SERVICE_ACCOUNT missing');
+    }
+    console.log('[products.js] FIREBASE_SERVICE_ACCOUNT found, length:', process.env.FIREBASE_SERVICE_ACCOUNT.length);
+    let serviceAccount;
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      // Fix private_key formatting for Firebase
+      if (serviceAccount.private_key) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      }
+      console.log('[products.js] Service account parsed successfully, private_key formatted');
+    } catch (parseErr) {
+      console.error('[products.js] Failed to parse FIREBASE_SERVICE_ACCOUNT:', parseErr.message);
+      throw parseErr;
+    }
     admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
     global.db = admin.firestore();
+    console.log('[products.js] Firebase Admin initialized, Firestore set');
   } catch (e) {
-    console.error('Erreur initialisation Admin SDK (products):', e.message);
+    console.error('[products.js] Erreur initialisation Admin SDK:', e.message);
     global.adminInitError = e;
   }
 } else {
   global.db = admin.firestore();
+  console.log('[products.js] Firebase Admin already initialized, Firestore set');
 }
 
 module.exports = async function handler(req, res) {
   try {
     if (global.adminInitError) {
-      return res.status(500).json({ ok: false, error: 'Erreur configuration serveur' });
+      console.error('[products.js] Returning 500 due to adminInitError:', global.adminInitError.message);
+      return res.status(500).json({ ok: false, error: 'Erreur configuration serveur', details: global.adminInitError.message });
+    }
+    if (!global.db) {
+      console.error('[products.js] global.db is undefined before Firestore access');
+      return res.status(500).json({ ok: false, error: 'Firestore non initialisé' });
     }
     const col = global.db.collection('products');
     const catCol = global.db.collection('categories');

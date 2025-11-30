@@ -1,3 +1,10 @@
+// Runtime check for required environment variables
+const requiredVars = ['FIREBASE_SERVICE_ACCOUNT', 'ADMIN_TOKEN'];
+requiredVars.forEach(v => {
+    if (!process.env[v]) {
+        console.error(`[delete-order.js] Missing env variable: ${v}`);
+    }
+});
 // =======================================================
 // FICHIER : api/delete-order.js (CODE SERVEUR VERCEL)
 // Gère la suppression d'une commande Firestore
@@ -8,27 +15,50 @@ const admin = require('firebase-admin');
 // Initialisation de l'Admin SDK : seulement s'il n'est pas déjà initialisé
 if (!admin.apps.length) {
     try {
-        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+            console.error('[delete-order.js] FIREBASE_SERVICE_ACCOUNT is missing from environment variables');
+            throw new Error('FIREBASE_SERVICE_ACCOUNT missing');
+        }
+        console.log('[delete-order.js] FIREBASE_SERVICE_ACCOUNT found, length:', process.env.FIREBASE_SERVICE_ACCOUNT.length);
+        let serviceAccount;
+        try {
+            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+            // Fix private_key formatting for Firebase
+            if (serviceAccount.private_key) {
+                serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+            }
+            console.log('[delete-order.js] Service account parsed successfully, private_key formatted');
+        } catch (parseErr) {
+            console.error('[delete-order.js] Failed to parse FIREBASE_SERVICE_ACCOUNT:', parseErr.message);
+            throw parseErr;
+        }
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
         });
         global.db = admin.firestore();
+        console.log('[delete-order.js] Firebase Admin initialized, Firestore set');
     } catch (e) {
-        console.error("Erreur CRITIQUE d'initialisation Admin SDK:", e.message);
+        console.error("[delete-order.js] Erreur CRITIQUE d'initialisation Admin SDK:", e.message);
         global.adminInitError = e;
     }
 } else {
     global.db = admin.firestore();
+    console.log('[delete-order.js] Firebase Admin already initialized, Firestore set');
 }
 
 // Le gestionnaire de la fonction Serverless Vercel
 module.exports = async (req, res) => {
     // Vérification de l'erreur d'initialisation
     if (global.adminInitError) {
+        console.error('[delete-order.js] Returning 500 due to adminInitError:', global.adminInitError.message);
         return res.status(500).json({
             message: 'Erreur de configuration serveur. Clé de service Firebase invalide.',
             error: global.adminInitError.message
         });
+    }
+    if (!global.db) {
+        console.error('[delete-order.js] global.db is undefined before Firestore access');
+        return res.status(500).json({ message: 'Firestore non initialisé' });
     }
 
     // Méthode requise

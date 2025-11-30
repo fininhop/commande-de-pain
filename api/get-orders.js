@@ -9,13 +9,15 @@ const admin = require('firebase-admin');
 if (!admin.apps.length) {
     try {
         // La clé de service est lue depuis la variable d'environnement Vercel
-        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT); 
-        
+        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        // Fix private_key formatting for Firebase
+        if (serviceAccount.private_key) {
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        }
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
         });
         global.db = admin.firestore(); // Stocker l'instance de db globalement
-        
     } catch (e) {
         console.error("Erreur CRITIQUE d'initialisation Admin SDK:", e.message);
         global.adminInitError = e; // Conserver l'erreur pour la renvoyer plus tard
