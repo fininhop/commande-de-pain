@@ -1722,6 +1722,27 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.show();
     }
     document.getElementById('addDeliveryPointBtn')?.addEventListener('click', () => openDeliveryPointModal());
+    // Bouton de test pour diagnostiquer l'API delivery-points en ligne
+    document.getElementById('testDeliveryPointsBtn')?.addEventListener('click', async () => {
+        const debugEl = document.getElementById('deliveryPointsDebug');
+        if (debugEl) debugEl.innerHTML = '<div class="text-center small text-muted">Test en cours…</div>';
+        const url = window.location.origin + '/api/delivery-points';
+        console.log('Test fetch delivery-points ->', url);
+        try {
+            const resp = await fetch(url);
+            console.log('Test fetch status:', resp.status, resp);
+            const text = await resp.text();
+            console.log('Test fetch body text:', text);
+            let parsed;
+            try { parsed = JSON.parse(text); } catch(e) { parsed = null; }
+            if (debugEl) {
+                debugEl.innerHTML = `<div class="p-2 bg-light border rounded small"><strong>Status:</strong> ${resp.status}<br><pre style="white-space:pre-wrap">${text}</pre></div>`;
+            }
+        } catch (err) {
+            console.error('Test fetch erreur:', err);
+            if (debugEl) debugEl.innerHTML = '<div class="text-danger">Erreur de test: ' + String(err) + '</div>';
+        }
+    });
     document.getElementById('deliveryPointForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('adminToken');
