@@ -97,41 +97,6 @@
             </div>
         </div>
 
-
-        <!-- Modal ajout/modification point de livraison -->
-        <div class="modal fade" id="deliveryPointModal" tabindex="-1" aria-labelledby="deliveryPointModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="deliveryPointModalLabel">Point de livraison</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="deliveryPointForm">
-                            <input type="hidden" id="deliveryPointId" />
-                            <div class="mb-3">
-                                <label for="deliveryPointName" class="form-label">Nom</label>
-                                <input type="text" class="form-control" id="deliveryPointName" required />
-                            </div>
-                            <div class="mb-3">
-                                <label for="deliveryPointCity" class="form-label">Ville</label>
-                                <input type="text" class="form-control" id="deliveryPointCity" required />
-                            </div>
-                            <div class="mb-3">
-                                <label for="deliveryPointAddress" class="form-label">Adresse</label>
-                                <input type="text" class="form-control" id="deliveryPointAddress" required />
-                            </div>
-                            <div class="mb-3">
-                                <label for="deliveryPointInfo" class="form-label">Infos complémentaires</label>
-                                <textarea class="form-control" id="deliveryPointInfo"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Enregistrer</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div id="adminLogin" class="card p-3 mb-3">
             <form id="adminLoginForm" class="d-flex gap-2 align-items-center">
                 <input id="adminTokenInput" type="password" class="form-control form-control-sm" placeholder="Token admin" />
@@ -152,45 +117,6 @@
 
             <!-- Accordion container -->
             <div class="accordion" id="adminAccordion">
-                                <!-- Produits -->
-                                <div class="accordion-item">
-                                        <h2 class="accordion-header" id="headingProducts">
-                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProducts" aria-expanded="false" aria-controls="collapseProducts">
-                                                        🥖 Produits
-                                                </button>
-                                        </h2>
-                                        <div id="collapseProducts" class="accordion-collapse collapse" aria-labelledby="headingProducts" data-bs-parent="#adminAccordion">
-                                                <div class="accordion-body">
-                                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                                                <h4 class="mb-0">🥖 Gestion des Produits</h4>
-                                                        </div>
-                                                        <form id="createProductForm" class="row g-2 mb-3">
-                                                                <div class="col-sm-3">
-                                                                    <input type="text" class="form-control" id="prodName" placeholder="Nom du produit" required />
-                                                                </div>
-                                                                <div class="col-sm-2">
-                                                                    <input type="number" step="0.01" class="form-control" id="prodPrice" placeholder="Prix (€)" required />
-                                                                </div>
-                                                                <div class="col-sm-2">
-                                                                    <input type="number" step="0.001" class="form-control" id="prodUnitWeight" placeholder="Poids unitaire (kg)" required />
-                                                                </div>
-                                                                <div class="col-sm-3">
-                                                                    <div class="input-group">
-                                                                        <select class="form-select" id="prodCategory" required title="Catégorie"></select>
-                                                                        <button class="btn btn-outline-primary" type="button" id="addCategoryBtn" title="Ajouter une catégorie">+</button>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-sm-1">
-                                                                    <input type="number" class="form-control" id="prodSortOrder" placeholder="#" title="Ordre d'affichage (vide = fin)" step="1" min="1" />
-                                                                </div>
-                                                                <div class="col-sm-1 d-grid">
-                                                                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                                                                </div>
-                                                        </form>
-                                                        <div id="productsGrid" class="row g-3"></div>
-                                                </div>
-                                        </div>
-                                </div>
                 <!-- Commandes -->
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingOrders">
@@ -279,7 +205,7 @@
                             <div id="deliveryPointsGrid" class="row g-3"></div>
                         </div>
                     </div>
-                </div>
+                </div>               
 
                 <!-- Gestion des Saisons -->
                 <div class="accordion-item">
@@ -300,6 +226,46 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Produits -->
+                <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingProducts">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProducts" aria-expanded="false" aria-controls="collapseProducts">
+                                        🥖 Produits
+                                </button>
+                        </h2>
+                        <div id="collapseProducts" class="accordion-collapse collapse" aria-labelledby="headingProducts" data-bs-parent="#adminAccordion">
+                                <div class="accordion-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h4 class="mb-0">🥖 Gestion des Produits</h4>
+                                        </div>
+                                        <form id="createProductForm" class="row g-2 mb-3">
+                                                <div class="col-sm-3">
+                                                    <input type="text" class="form-control" id="prodName" placeholder="Nom du produit" required />
+                                                </div>
+                                                <div class="col-sm-2">
+                                                    <input type="number" step="0.01" class="form-control" id="prodPrice" placeholder="Prix (€)" required />
+                                                </div>
+                                                <div class="col-sm-2">
+                                                    <input type="number" step="0.001" class="form-control" id="prodUnitWeight" placeholder="Poids unitaire (kg)" required />
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <div class="input-group">
+                                                        <select class="form-select" id="prodCategory" required title="Catégorie"></select>
+                                                        <button class="btn btn-outline-primary" type="button" id="addCategoryBtn" title="Ajouter une catégorie">+</button>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-1">
+                                                    <input type="number" class="form-control" id="prodSortOrder" placeholder="#" title="Ordre d'affichage (vide = fin)" step="1" min="1" />
+                                                </div>
+                                                <div class="col-sm-1 d-grid">
+                                                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                                                </div>
+                                        </form>
+                                        <div id="productsGrid" class="row g-3"></div>
+                                </div>
+                        </div>
+                </div>                 
 
                 <!-- Administrer utilisateurs -->
                 <div class="accordion-item">
@@ -353,6 +319,41 @@
                 </div>
             </div>
         </div>
+
+
+        <!-- Modal ajout/modification point de livraison -->
+        <div class="modal fade" id="deliveryPointModal" tabindex="-1" aria-labelledby="deliveryPointModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deliveryPointModalLabel">Point de livraison</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="deliveryPointForm">
+                            <input type="hidden" id="deliveryPointId" />
+                            <div class="mb-3">
+                                <label for="deliveryPointName" class="form-label">Nom</label>
+                                <input type="text" class="form-control" id="deliveryPointName" required />
+                            </div>
+                            <div class="mb-3">
+                                <label for="deliveryPointCity" class="form-label">Ville</label>
+                                <input type="text" class="form-control" id="deliveryPointCity" required />
+                            </div>
+                            <div class="mb-3">
+                                <label for="deliveryPointAddress" class="form-label">Adresse</label>
+                                <input type="text" class="form-control" id="deliveryPointAddress" required />
+                            </div>
+                            <div class="mb-3">
+                                <label for="deliveryPointInfo" class="form-label">Infos complémentaires</label>
+                                <textarea class="form-control" id="deliveryPointInfo"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>        
 
         <!-- Modal de gestion des saisons -->
         <div class="modal fade" id="seasonModal" tabindex="-1" aria-hidden="true">
