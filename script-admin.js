@@ -1656,6 +1656,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const resp = await fetch('/api/delivery-points');
         const data = await parseApiResponse(resp);
         deliveryPoints = data.points || [];
+        console.log('Points de livraison reçus:', deliveryPoints);
         if (!deliveryPoints.length) {
             listEl.innerHTML = '<div class="text-muted">Aucun point de livraison enregistré.</div>';
             return;
