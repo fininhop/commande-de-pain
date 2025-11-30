@@ -1167,7 +1167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchAdminOrders(token) {
         showMessage('Chargement...', 'muted');
         try {
-            const response = await fetch('/api/get-orders', { headers: { 'x-admin-token': token } });
+            const response = await fetch('/api/orders', { headers: { 'x-admin-token': token } });
             let result = null;
             try { result = await response.json(); } catch(e) { result = null; }
 
@@ -1240,7 +1240,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function pollOrdersIfChanged() {
         const t = localStorage.getItem('adminToken');
         if (!t) return;
-        const r = await fetch('/api/get-orders', { headers: { 'x-admin-token': t }, cache: 'no-cache' });
+        const r = await fetch('/api/orders', { headers: { 'x-admin-token': t }, cache: 'no-cache' });
         const j = await r.json().catch(()=>({}));
         if (!r.ok || !j || !j.orders) return;
         const fp = computeFingerprint(j.orders||[], o => ({ id: String(o.id||''), ca: String(o.createdAt||''), d: String(o.date||''), n: String(o.name||''), len: (o.items||[]).length }));
@@ -1265,7 +1265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function pollUsersIfChanged() {
-        const r = await fetch('/api/get-users', { cache: 'no-cache' });
+        const r = await fetch('/api/users', { cache: 'no-cache' });
         const j = await r.json().catch(()=>({}));
         if (!j || !j.users) return;
         const fp = computeFingerprint(j.users||[], u => ({ id: String(u.id||''), e: String(u.email||''), p: String(u.phone||'') }));
@@ -1546,7 +1546,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Chargement et rendu des utilisateurs
     async function fetchUsers() {
         try {
-            const resp = await fetch('/api/get-users');
+            const resp = await fetch('/api/users');
             const jr = await resp.json().catch(() => null);
             if (!resp.ok) {
                 console.error('Erreur get-users:', jr && jr.message);
