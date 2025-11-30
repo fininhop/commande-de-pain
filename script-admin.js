@@ -954,8 +954,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const token = localStorage.getItem('adminToken');
                 showPageLoader('Suppression…');
                 try {
-                    const resp = await fetch('/api/delete-order', {
-                        method: 'POST',
+                    const resp = await fetch('/api/orders', {
+                        method: 'DELETE',
                         headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
                         body: JSON.stringify({ orderId })
                     });
@@ -1004,8 +1004,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const token = localStorage.getItem('adminToken');
                 showPageLoader('Mise à jour…');
                 try {
-                    const resp = await fetch('/api/update-order', {
-                        method: 'POST',
+                    const resp = await fetch('/api/orders', {
+                        method: 'PATCH',
                         headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
                         body: JSON.stringify({ orderId, updates })
                     });

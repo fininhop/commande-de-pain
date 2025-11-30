@@ -132,7 +132,7 @@ function renderMyOrders(list){
                 const stored = localStorage.getItem('currentUser');
                 let currentUser = null;
                 try { currentUser = stored ? JSON.parse(stored) : null; } catch(e) { currentUser = null; }
-                const r = await fetch('/api/delete-order', {
+                const r = await fetch('/api/orders', {
                     method:'POST', headers:{ 'Content-Type':'application/json' },
                     body: JSON.stringify({ orderId: id, email: currentUser && currentUser.email })
                 });
@@ -149,7 +149,7 @@ async function pollMyOrdersIfChanged(){
     let currentUser = null;
     try { currentUser = stored ? JSON.parse(stored) : null; } catch(e) { currentUser = null; }
     if (!currentUser) return;
-    const r = await fetch('/api/get-orders-by-user', {
+    const r = await fetch('/api/orders', {
         method:'POST', headers:{ 'Content-Type':'application/json' }, cache:'no-cache',
         body: JSON.stringify({ userId: currentUser.userId || currentUser.id, email: currentUser.email })
     });

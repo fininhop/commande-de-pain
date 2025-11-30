@@ -586,7 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (submitBtn) submitBtn.classList.add('btn-loading');
             disableForm(form);
             showPageLoader('Enregistrement de la commande…');
-            const response = await fetch('/api/save-order', {
+            const response = await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData),
