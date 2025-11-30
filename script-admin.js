@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 grid.innerHTML = '<div class="d-flex justify-content-center py-4 w-100"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement…</span></div></div>';
             }
             const resp = await fetch('/api/products');
-            const data = await resp.json();
+            const data = await parseApiResponse(resp);
             if (!data.ok) return;
             currentProducts = data.products || [];
             PRODUCTS_FP = computeFingerprint(currentProducts, p => ({ id: String(p.id||''), cat: String(p.category||''), so: Number(p.sortOrder||0), name: String(p.name||''), act: p.active!==false }));
@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Charger tous les produits, déplacer ceux de la catégorie source
                         try {
                             const resp = await fetch('/api/products');
-                            const data = await resp.json();
+                            const data = await parseApiResponse(resp);
                             if (!data.ok) throw new Error('Produits non chargés');
                             const allProducts = data.products || [];
                             const prods = allProducts.filter(p => (p.category||'') === source)
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const payload = { name, price, unitWeight, active: true, category };
                 if (!Number.isNaN(sortOrder)) payload.sortOrder = sortOrder; // blank = server will set first
                 const resp = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify(payload) });
-                const j = await resp.json();
+                const j = await parseApiResponse(resp);
                 if (j.ok) {
                     form.reset();
                     showToast('Produit ajouté', 'Succès');
@@ -675,7 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
                         body: JSON.stringify(payload)
                     });
-                    const j = await resp.json();
+                    const j = await parseApiResponse(resp);
                     if (resp.ok && j && j.ok) {
                         showToast('Succès', 'Produit mis à jour', 'success');
                         if (productModal) productModal.hide();
@@ -959,7 +959,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
                         body: JSON.stringify({ orderId })
                     });
-                    const jr = await resp.json().catch(() => null);
+                    const jr = await parseApiResponse(resp);
                     if (resp.ok) {
                         showToast('✅ Succès', 'Commande supprimée', 'success');
                         card.remove();
@@ -1344,7 +1344,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
                 body: JSON.stringify(payload)
             });
-            const jr = await resp.json();
+            const jr = await parseApiResponse(resp);
             if (resp.ok) {
                 showToast('Succès', id ? 'Saison modifiée' : 'Saison créée', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('seasonModal')).hide();
@@ -1540,7 +1540,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchUsers() {
         try {
             const resp = await fetch('/api/users');
-            const jr = await resp.json().catch(() => null);
+            const jr = await parseApiResponse(resp);
             if (!resp.ok) {
                 console.error('Erreur get-users:', jr && jr.message);
                 renderUsers([]);
@@ -1654,7 +1654,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!listEl) return;
         listEl.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>';
         const resp = await fetch('/api/delivery-points');
-        const data = await resp.json();
+        const data = await parseApiResponse(resp);
         deliveryPoints = data.points || [];
         if (!deliveryPoints.length) {
             listEl.innerHTML = '<div class="text-muted">Aucun point de livraison enregistré.</div>';
@@ -1688,7 +1688,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
                         body: JSON.stringify({ id })
                     });
-                    const jr = await resp.json();
+                    const jr = await parseApiResponse(resp);
                     if (resp.ok) { showToast('Succès', 'Point supprimé', 'success'); loadDeliveryPoints(); }
                     else showToast('Erreur', jr.message || 'Suppression impossible', 'error');
                 }
@@ -1720,7 +1720,7 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
             body: JSON.stringify({ id, name, city, address, info })
         });
-        const jr = await resp.json();
+        const jr = await parseApiResponse(resp);
         if (resp.ok) {
             showToast('Succès', id ? 'Point modifié' : 'Point ajouté', 'success');
             bootstrap.Modal.getInstance(document.getElementById('deliveryPointModal')).hide();
@@ -1737,7 +1737,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!select) return;
         select.innerHTML = '<option value="">Chargement...</option>';
         const resp = await fetch('/api/delivery-points');
-        const data = await resp.json();
+        const data = await parseApiResponse(resp);
         const points = data.points || [];
         if (!points.length) {
             select.innerHTML = '<option value="">Aucun point disponible</option>';
@@ -1747,4 +1747,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     document.getElementById('newSeasonBtn')?.addEventListener('click', fillSeasonDeliveryPoints);
     document.getElementById('seasonDeliveryPoint')?.addEventListener('focus', fillSeasonDeliveryPoints);
+
+    // Utilitaire pour parser la réponse API en JSON ou texte
+    async function parseApiResponse(response) {
+        try {
+            return await response.json();
+        } catch (err) {
+            const text = await response.text().catch(() => '');
+            return { message: text || 'Réponse serveur invalide' };
+        }
+    }
 });
