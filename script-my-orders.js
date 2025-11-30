@@ -41,7 +41,7 @@ async function fetchMyOrders(){
     let currentUser = null;
     try { currentUser = stored ? JSON.parse(stored) : null; } catch(e) { currentUser = null; }
     if (!currentUser) { window.location.href = 'index.html'; return; }
-    const r = await fetch('/api/get-orders-by-user', {
+    const r = await fetch('/api/orders', {
         method:'POST', headers:{ 'Content-Type':'application/json' }, cache:'no-cache',
         body: JSON.stringify({ userId: currentUser.userId || currentUser.id, email: currentUser.email })
     });

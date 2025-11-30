@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             disableForm(form);
             showPageLoader('Création du compte…');
             // Envoyer le mot de passe au serveur (qui le hashera avec bcryptjs côté serveur)
-            const response = await fetch('/api/save-user', {
+            const response = await fetch('/api/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

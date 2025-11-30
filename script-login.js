@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             disableForm(form);
             showPageLoader('Connexion…');
             // Appeler l'API pour vérifier les credentials
-            const response = await fetch('/api/verify-user', {
+            const response = await fetch('/api/users/verify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })

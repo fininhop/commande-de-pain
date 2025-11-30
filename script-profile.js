@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     if (!payload.userId) { showMessageModal('Erreur', 'Identifiant utilisateur manquant', 'error'); return; }
     try {
-      const resp = await fetch('/api/update-user', {
+        const resp = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userId = user.userId || user.id;
     if (!userId) { showMessageModal('Erreur', 'Identifiant utilisateur manquant', 'error'); return; }
     try {
-      const resp = await fetch('/api/delete-user', {
+        const resp = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     try {
-      const resp = await fetch('/api/update-user', {
+        const resp = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, currentPassword, newPassword })
