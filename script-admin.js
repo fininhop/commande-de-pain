@@ -1713,10 +1713,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const city = document.getElementById('deliveryPointCity').value.trim();
         const address = document.getElementById('deliveryPointAddress').value.trim();
         const info = document.getElementById('deliveryPointInfo').value.trim();
-        if (!name || !city || !address) { showToast('Erreur', 'Nom, ville et adresse requis', 'error'); return; }
-        const method = id ? 'PATCH' : 'POST';
+        if (!name || !city || !address) {
+            showToast('Erreur', 'Nom, ville et adresse requis', 'error');
+            return;
+        }
         const resp = await fetch('/api/delivery-points', {
-            method,
+            method: id ? 'PATCH' : 'POST',
             headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
             body: JSON.stringify({ id, name, city, address, info })
         });
@@ -1730,23 +1732,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     document.addEventListener('DOMContentLoaded', loadDeliveryPoints);
-    // --- Fin points de livraison ---
-
-    async function fillSeasonDeliveryPoints() {
-        const select = document.getElementById('seasonDeliveryPoint');
-        if (!select) return;
-        select.innerHTML = '<option value="">Chargement...</option>';
-        const resp = await fetch('/api/delivery-points');
-        const data = await parseApiResponse(resp);
-        const points = data.points || [];
-        if (!points.length) {
-            select.innerHTML = '<option value="">Aucun point disponible</option>';
-            return;
-        }
-        select.innerHTML = points.map(pt => `<option value="${pt.id}">${pt.name} (${pt.city})</option>`).join('');
-    }
-    document.getElementById('newSeasonBtn')?.addEventListener('click', fillSeasonDeliveryPoints);
-    document.getElementById('seasonDeliveryPoint')?.addEventListener('focus', fillSeasonDeliveryPoints);
 
     // Utilitaire pour parser la réponse API en JSON ou texte
     async function parseApiResponse(response) {
