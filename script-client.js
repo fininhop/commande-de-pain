@@ -74,6 +74,7 @@ async function loadSeasons() {
             } else {
                 orderingEnabled = true;
                 setOrderingAvailability(true);
+                afterSeasonLoaded();
             }
         } else {
             console.error('Erreur chargement saisons:', result.message);
