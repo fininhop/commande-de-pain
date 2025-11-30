@@ -1674,20 +1674,22 @@ document.addEventListener('DOMContentLoaded', () => {
             listEl.innerHTML = '<div class="text-warning">Aucun point de livraison trouvé ou chargement impossible.<br><small>Vérifiez l’authentification ou la connexion API.</small></div>';
             return;
         }
+        // Rendu en cards dans une grille (2 colonnes sur md+)
         listEl.innerHTML = deliveryPoints.map(pt => `
-            <div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>${pt.name}</strong> <span class="text-muted">(${pt.city})</span><br>
-                    <span class="small">${pt.address}</span>
-                    ${pt.info ? `<br><span class='text-muted small'>${pt.info}</span>` : ''}
-                </div>
-                <div>
-                    <button class="btn btn-sm btn-outline-primary me-1" data-action="edit" data-id="${pt.id}">Éditer</button>
-                    <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${pt.id}">Supprimer</button>
+            <div class="col-12 col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title mb-1">${pt.name}</h5>
+                        <h6 class="card-subtitle text-muted mb-2">${pt.city}</h6>
+                        <p class="card-text mb-2 small">${pt.address}${pt.info ? '<br><span class="text-muted small">' + pt.info + '</span>' : ''}</p>
+                        <div class="mt-auto d-flex justify-content-end gap-2">
+                            <button class="btn btn-sm btn-outline-primary" data-action="edit" data-id="${pt.id}">Éditer</button>
+                            <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${pt.id}">Supprimer</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `).join('');
-        listEl.innerHTML += '<pre style="background:#fff;color:#333;padding:8px;border-radius:6px;">' + JSON.stringify(deliveryPoints, null, 2) + '</pre>';
         // Bind actions
         listEl.querySelectorAll('button[data-action]').forEach(btn => {
             btn.addEventListener('click', async (e) => {
