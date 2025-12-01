@@ -1659,16 +1659,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let data;
         try {
             const resp = await fetch(window.location.origin + '/api/delivery-points');
-            console.log('Réponse brute du fetch:', resp);
             data = await parseApiResponse(resp);
-            console.log('Résultat du parseApiResponse:', data);
         } catch (err) {
-            listEl.innerHTML = '<div class="text-danger">Erreur de chargement des points de livraison (fetch ou parse): ' + err + '</div>';
-            console.error('Erreur de chargement des points de livraison (fetch ou parse):', err);
+            listEl.innerHTML = '<div class="text-danger">Erreur de chargement des points de livraison.</div>';
+            console.error('Erreur de chargement des points de livraison:', err);
             return;
         }
         deliveryPoints = (data && data.points) ? data.points : [];
-        console.log('Points de livraison reçus:', deliveryPoints);
+        // deliveryPoints populated
         if (!deliveryPoints.length) {
             listEl.innerHTML = '<div class="text-warning">Aucun point de livraison trouvé ou chargement impossible.<br><small>Vérifiez l’authentification ou la connexion API.</small></div>';
             return;
@@ -1721,27 +1719,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.show();
     }
     document.getElementById('addDeliveryPointBtn')?.addEventListener('click', () => openDeliveryPointModal());
-    // Bouton de test pour diagnostiquer l'API delivery-points en ligne
-    document.getElementById('testDeliveryPointsBtn')?.addEventListener('click', async () => {
-        const debugEl = document.getElementById('deliveryPointsDebug');
-        if (debugEl) debugEl.innerHTML = '<div class="text-center small text-muted">Test en cours…</div>';
-        const url = window.location.origin + '/api/delivery-points';
-        console.log('Test fetch delivery-points ->', url);
-        try {
-            const resp = await fetch(url);
-            console.log('Test fetch status:', resp.status, resp);
-            const text = await resp.text();
-            console.log('Test fetch body text:', text);
-            let parsed;
-            try { parsed = JSON.parse(text); } catch(e) { parsed = null; }
-            if (debugEl) {
-                debugEl.innerHTML = `<div class="p-2 bg-light border rounded small"><strong>Status:</strong> ${resp.status}<br><pre style="white-space:pre-wrap">${text}</pre></div>`;
-            }
-        } catch (err) {
-            console.error('Test fetch erreur:', err);
-            if (debugEl) debugEl.innerHTML = '<div class="text-danger">Erreur de test: ' + String(err) + '</div>';
-        }
-    });
+    // (removed test button handler)
     document.getElementById('deliveryPointForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('adminToken');
@@ -1768,7 +1746,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Erreur', jr.message || 'Enregistrement impossible', 'error');
         }
     });
-    console.log('DOMContentLoaded: appel forcé de loadDeliveryPoints');
     loadDeliveryPoints();
 
     // Utilitaire pour parser la réponse API en JSON ou texte
