@@ -1,4 +1,3 @@
-    console.log('Entrée dans loadDeliveryPoints');
 // script-admin.js - Interface d'administration simple (token-based)
 
 // Toast notification function
@@ -1769,10 +1768,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Erreur', jr.message || 'Enregistrement impossible', 'error');
         }
     });
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOMContentLoaded: appel forcé de loadDeliveryPoints');
-        loadDeliveryPoints();
-    });
+    console.log('DOMContentLoaded: appel forcé de loadDeliveryPoints');
+    loadDeliveryPoints();
 
     // Utilitaire pour parser la réponse API en JSON ou texte
     async function parseApiResponse(response) {
