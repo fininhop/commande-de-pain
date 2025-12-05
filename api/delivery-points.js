@@ -5,15 +5,18 @@ const admin = require('firebase-admin');
 
 if (!admin.apps.length) {
     try {
-        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+        if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT manquante');
+        const serviceAccount = JSON.parse(raw);
         if (serviceAccount.private_key) {
-            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n').replace(/\n/g, '\n');
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
         }
         admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
         global.db = admin.firestore();
+        global.deliveryAdminInitError = null;
     } catch (e) {
         console.error('Erreur initialisation Admin SDK (delivery-points):', e.message);
-        global.adminInitError = e;
+        global.deliveryAdminInitError = e;
     }
 } else {
     global.db = admin.firestore();
@@ -22,8 +25,8 @@ if (!admin.apps.length) {
 const db = global.db;
 
 module.exports = async (req, res) => {
-    if (global.adminInitError) {
-        return res.status(500).json({ message: 'Erreur de configuration serveur.', error: global.adminInitError.message });
+    if (global.deliveryAdminInitError || !db) {
+        return res.status(500).json({ message: 'Erreur de configuration serveur (Firebase).', error: (global.deliveryAdminInitError && global.deliveryAdminInitError.message) || 'Firestore non initialisé' });
     }
 
     const method = req.method;
